@@ -1,0 +1,31 @@
+name: Request Enhancement
+description: Request an enhancement
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Thank you for submitting an enhancement request! :+1:
+
+        Please use this form to request additional functionality.
+
+        To report unexpected behaviour, please use the ['Report Bug'](https://github.com/tf2d2/tf2d2/issues/new?assignees=&labels=bug&template=bug.yml) form.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the requested enhancement.
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: |
+        Additional details such as links to any other relevant documentation, other GitHub issues and/or pull requests.
+
+        [How to reference Github Issues](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls)
+    validations:
+      required: false
