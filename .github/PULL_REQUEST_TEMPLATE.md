@@ -10,7 +10,7 @@ If your pull request fully resolves and should automatically close the linked is
 For Example:
 
 Relates #0000
-or 
+or
 Closes #0000
 --->
 
