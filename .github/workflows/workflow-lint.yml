@@ -1,0 +1,32 @@
+name: Workflow Lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/*.yml'
+
+permissions: read-all
+
+jobs:
+  workflow-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
+      - name: Validate syntax with actionlint
+        run: |
+          echo "::add-matcher::.github/actionlint-matcher.json"
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+        shell: bash
+
+      - name: Validate GitHub Actions with checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          framework: github_actions
+          directory: ./github/workflows/
+          quite: true
+          compact: true
+          output_format: github_failed_only
