@@ -21,7 +21,7 @@ build:
 	go build -o ./bin/$(GOOS)-$(GOARCH)/tf2d2
 
 local-release:
-	goreleaser release --clean --skip-publish --skip-docker --skip-validate
+	goreleaser release --clean --skip-publish --skip-docker --skip-validate --snapshot
 
 lint:
 	golangci-lint run ./...
@@ -31,3 +31,6 @@ test:
 
 pre-commit:
 	pre-commit run --all-files
+
+local-run:
+	./bin/$(GOOS)-$(GOARCH)/tf2d2 $(ARGS)
