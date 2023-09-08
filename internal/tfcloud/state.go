@@ -18,62 +18,54 @@ package tfcloud
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 
 	"github.com/hashicorp/go-hclog"
-	tfjson "github.com/hashicorp/terraform-json"
 )
 
 // GetStateVersion allows to retrieve the state version of a Terraform workspace
 type GetStateVersion struct {
-	Context   context.Context
-	TFCloud   *TFCloud
-	Workspace string
+	Context      context.Context
+	TFCloud      *TFCloud
+	Organization string
+	Workspace    string
 }
 
 // Run retrieves the state version of a Terraform workspace
-func (c *GetStateVersion) Run(orgName string, workspaceName string) (*tfjson.State, error) {
+func (c *GetStateVersion) Run() (json.RawMessage, error) {
 	logger := hclog.FromContext(c.Context)
 
-	stateVersionRes, err := c.TFCloud.StateVersionService.GetState(c.Context, orgName, workspaceName)
+	stateVersionRes, err := c.TFCloud.StateVersionService.GetState(c.Context, c.Organization, c.Workspace)
 	if err != nil {
-		logger.Error("error getting Terraform state version", err.Error())
+		logger.Error("error getting terraform state version", "error", err)
 		return nil, err
 	}
-	logger.Info("successfully retrieved state version", "download-url", stateVersionRes.JSONDownloadURL)
 
-	stateDownloadReq, err := http.NewRequestWithContext(c.Context, http.MethodGet, stateVersionRes.JSONDownloadURL, nil)
+	stateDownloadReq, err := http.NewRequestWithContext(c.Context, http.MethodGet, stateVersionRes.DownloadURL, nil)
 	if err != nil {
-		logger.Error("error downloading json state", "error", err.Error())
+		logger.Error("error downloading json state", "error", err)
 		return nil, err
 	}
 
 	stateDownloadRes, err := http.DefaultClient.Do(stateDownloadReq)
 	if err != nil {
-		logger.Error("error making http request to download json state", "error", err.Error())
+		logger.Error("error making http request to download json state", "error", err)
 		return nil, err
 	}
 	defer func() {
 		err = stateDownloadRes.Body.Close()
 		if err != nil {
-			logger.Error("error closing download response body", "error", err.Error())
+			logger.Error("error closing download response body", "error", err)
 		}
 	}()
 
 	stateJSON, err := io.ReadAll(stateDownloadRes.Body)
 	if err != nil {
-		logger.Error("error reading state download response body", "error", err.Error())
+		logger.Error("error reading state download response body", "error", err)
 		return nil, err
 	}
 
-	var state tfjson.State
-
-	err = state.UnmarshalJSON(stateJSON)
-	if err != nil {
-		logger.Error("error unmarshalling state", "error", err)
-		return nil, err
-	}
-
-	return &state, nil
+	return stateJSON, nil
 }

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/tf2d2/tf2d2/internal/diagram"
 	"github.com/tf2d2/tf2d2/internal/inframap"
@@ -38,99 +39,114 @@ type CliRuntime struct {
 }
 
 type Config struct {
-	CfgFile    string
-	Host       string
-	Org        string
-	Workspace  string
-	StateFile  string
-	OutputFile string
+	CfgFile      string `mapstructure:"-"`
+	Hostname     string `mapstructure:"hostname"`
+	Organization string `mapstructure:"organization"`
+	Workspace    string `mapstructure:"workspace"`
+	Token        string `mapstructure:"token"`
+	OutputFile   string `mapstructure:"output-file"`
+	OutputPath   string `mapstructure:"output-path"`
+	StateFile    string `mapstructure:"state-file"`
+	Verbose      bool   `mapstructure:"verbose"`
+	DryRun       bool   `mapstructure:"dry-run"`
 }
 
 func NewCliRuntime(ctx context.Context, logger hclog.Logger) *CliRuntime {
 	return &CliRuntime{
-		cmd:       &cobra.Command{},
-		cliCtx:    ctx,
+		cmd:       nil,
+		cliCtx:    hclog.WithContext(ctx, logger),
 		cliLogger: logger,
 		Config:    &Config{},
 	}
 }
 
-func (r *CliRuntime) PreRunE(_ *cobra.Command, _ []string) error {
+// PreRunE executes before `RunE` to configure Viper and logging level
+func (r *CliRuntime) PreRunE(cmd *cobra.Command, _ []string) error {
+	r.cmd = cmd
+
+	if err := r.bindFlags(); err != nil {
+		return err
+	}
+
+	if err := r.readConfig(); err != nil {
+		return err
+	}
+
+	if err := viper.Unmarshal(r.Config); err != nil {
+		return err
+	}
+
 	verbose := viper.GetBool("verbose")
 	if verbose {
 		r.cliLogger.SetLevel(hclog.LevelFromString("debug"))
 	}
-	err := r.readConfig()
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
+// RunE executes the logic to generate a d2 diagram from Terraform state
 func (r *CliRuntime) RunE(_ *cobra.Command, _ []string) error {
-	r.cliCtx = hclog.WithContext(r.cliCtx, r.cliLogger)
-	vOrg := viper.GetString("org")
-	vWorkspace := viper.GetString("workspace")
-	vStateFile := viper.GetString("state-file")
-
-	if vWorkspace != "" {
-		tfe, err := tfcloud.NewTFClient(viper.GetString("host"), viper.GetString("token"))
+	// generate d2 diagram from local or remote Terraform state
+	var tfJsonState []byte
+	if r.Config.StateFile != "" {
+		// open and read the Terraform state JSON file
+		bytes, err := os.ReadFile(filepath.Clean(r.Config.StateFile))
 		if err != nil {
-			r.cliLogger.Error("failed to initialize Terraform Cloud client", "error", err.Error())
+			return err
+		}
+		tfJsonState = bytes
+		r.cliLogger.Info("loaded local terraform state", "file", r.Config.StateFile)
+	} else {
+		tfe, err := tfcloud.NewTFClient(r.Config.Hostname, r.Config.Token)
+		if err != nil {
+			r.cliLogger.Error("failed to initialize terraform cloud client", "error", err)
 			return err
 		}
 
 		c := tfcloud.NewTFCloud(tfe)
 		stateCommand := &tfcloud.GetStateVersion{
-			Context:   r.cliCtx,
-			TFCloud:   c,
-			Workspace: vWorkspace,
+			Context:      r.cliCtx,
+			TFCloud:      c,
+			Organization: r.Config.Organization,
+			Workspace:    r.Config.Workspace,
 		}
-		stateCommand.Run(vOrg, vWorkspace)
-	} else {
-		if vStateFile != "" {
-			m, err := inframap.GenerateInfraMap(r.cliCtx, viper.GetString("state-file"))
-			if err != nil {
-				r.cliLogger.Error("error generating terraform infra map", "error", err)
-			}
-			d := diagram.NewDiagram(r.cliCtx, m)
-			if err = d.Initialize(); err != nil {
-				return err
-			}
-			if err = d.Generate(); err != nil {
-				return err
-			}
-			if err = d.Render(); err != nil {
-				return err
-			}
-		} else {
-			return errors.New("path to state file is empty")
+		tfJsonState, err = stateCommand.Run()
+		if err != nil {
+			return err
 		}
+		r.cliLogger.Info("loaded remote terraform state", "organization", r.Config.Organization, "workspace", r.Config.Workspace)
+	}
+
+	m, err := inframap.GenerateInfraMap(r.cliCtx, tfJsonState)
+	if err != nil {
+		r.cliLogger.Error("error generating terraform infra map", "error", err)
+	}
+	d := diagram.NewDiagram(r.cliCtx, m)
+	if err = d.Initialize(); err != nil {
+		return err
+	}
+	if err = d.Generate(); err != nil {
+		return err
+	}
+	if err = d.Render(); err != nil {
+		return err
 	}
 
 	return nil
 }
 
+// readConfig loads Viper config
 func (r *CliRuntime) readConfig() error {
-	if r.Config.CfgFile != "" {
-		// Use config file from the flag.
+	if r.cmd.Flags().Changed("config") {
 		viper.SetConfigFile(r.Config.CfgFile)
 	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		if err != nil {
-			r.cliLogger.Error("failed to find $HOME directory", "error", err.Error())
-			return err
-		}
-
-		// Search config in the following directories with name ".checkov-docs" (without extension)
-		viper.AddConfigPath(home) // home directory
-		viper.AddConfigPath(".")  // current directory
-		viper.SetConfigType("yaml")
 		viper.SetConfigName(".tf2d2")
+		viper.SetConfigType("yml")
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	// Search config in the following directories with name ".tf2d2" (without extension)
+	viper.AddConfigPath("$HOME/") // home directory
+	viper.AddConfigPath(".")      // current directory
 
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
@@ -150,3 +166,24 @@ func (r *CliRuntime) readConfig() error {
 	}
 	return nil
 }
+
+// bindFlags binds all Cobra flags to Viper config
+func (r *CliRuntime) bindFlags() error {
+	fs := r.cmd.Flags()
+	if err := viper.BindPFlags(fs); err != nil {
+		return err
+	}
+	return nil
+}
+
+// func generateContent() error {
+
+// 	// TODO: use local TF state file or get remote TF state
+// 	// to generate TF infra map
+// 	return nil
+// }
+
+// func writeContent(config *Config, content string) error {
+
+// 	return nil
+// }

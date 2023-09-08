@@ -18,9 +18,6 @@ package inframap
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cycloidio/inframap/generate"
 	"github.com/cycloidio/inframap/graph"
@@ -33,15 +30,8 @@ type TFInfraMap struct {
 }
 
 // GenerateInfraMap generates an infra map from Terraform state
-func GenerateInfraMap(ctx context.Context, filename string) (*TFInfraMap, error) {
+func GenerateInfraMap(ctx context.Context, state []byte) (*TFInfraMap, error) {
 	logger := hclog.FromContext(ctx)
-	logger.Info("generate terraform infra map")
-
-	// open and read the Terraform state JSON file
-	stateFile, err := os.ReadFile(filepath.Clean(filename))
-	if err != nil {
-		return nil, err
-	}
 
 	opt := generate.Options{
 		Raw:           true,
@@ -50,7 +40,7 @@ func GenerateInfraMap(ctx context.Context, filename string) (*TFInfraMap, error)
 		ExternalNodes: true,
 	}
 
-	g, gDesc, err := generate.FromState(stateFile, opt)
+	g, gDesc, err := generate.FromState(state, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +50,7 @@ func GenerateInfraMap(ctx context.Context, filename string) (*TFInfraMap, error)
 		GraphDesc: gDesc,
 	}
 
-	logger.Info(fmt.Sprintf("total nodes: %d", len(g.Nodes)))
-	logger.Info(fmt.Sprintf("total edges: %d", len(g.Edges)))
+	logger.Info("generated terraform infra map", "nodes", len(g.Nodes), "edges", len(g.Edges))
 
 	return tfinframap, nil
 }

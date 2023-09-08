@@ -17,13 +17,17 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/tf2d2/tf2d2/cmd"
 )
 
+var appCtx context.Context
+
 func main() {
-	if err := cmd.Execute(); err != nil {
+	appCtx = context.Background()
+	if err := cmd.Execute(appCtx); err != nil {
 		os.Exit(1)
 	}
 }

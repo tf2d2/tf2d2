@@ -50,7 +50,7 @@ func NewTFClient(host, token string) (*tfe.Client, error) {
 	tfeConfig.Token = apiToken
 
 	if tfeConfig.Token == "" {
-		return nil, fmt.Errorf("Terraform API token is not set")
+		return nil, fmt.Errorf("terraform api token is not set")
 	}
 
 	client, err := tfe.NewClient(tfeConfig)
