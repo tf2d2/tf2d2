@@ -18,6 +18,7 @@ package inframap
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cycloidio/inframap/generate"
 	"github.com/cycloidio/inframap/graph"
@@ -42,7 +43,7 @@ func GenerateInfraMap(ctx context.Context, state []byte) (*TFInfraMap, error) {
 
 	g, gDesc, err := generate.FromState(state, opt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error generating infra map: %s", err)
 	}
 
 	tfinframap := &TFInfraMap{
