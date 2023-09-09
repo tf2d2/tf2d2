@@ -54,9 +54,9 @@ func NewCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&r.Config.Token, "token", "t", "", "terraform api token")
 	cmd.PersistentFlags().StringVarP(&r.Config.StateFile, "state-file", "f", "", "file path of terraform state")
 	cmd.PersistentFlags().StringVarP(&r.Config.OutputFile, "output-file", "o", "tf2d2", "name of output file")
-	cmd.PersistentFlags().StringVarP(&r.Config.OutputFile, "output-path", "p", "", "file path of output")
-	cmd.PersistentFlags().BoolP("verbose", "v", false, "show debug output")
-	cmd.PersistentFlags().Bool("dry-run", false, "only print output")
+	cmd.PersistentFlags().StringVarP(&r.Config.OutputPath, "output-path", "p", "", "file path of output")
+	cmd.PersistentFlags().BoolVarP(&r.Config.Verbose, "verbose", "v", false, "show debug output")
+	cmd.PersistentFlags().BoolVarP(&r.Config.DryRun, "dry-run", "", false, "only print output")
 
 	return cmd
 }

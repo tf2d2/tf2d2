@@ -43,7 +43,7 @@ func GenerateInfraMap(ctx context.Context, state []byte) (*TFInfraMap, error) {
 
 	g, gDesc, err := generate.FromState(state, opt)
 	if err != nil {
-		return nil, fmt.Errorf("error generating infra map: %s", err)
+		return nil, fmt.Errorf("error generating infra map: %w", err)
 	}
 
 	tfinframap := &TFInfraMap{
@@ -51,7 +51,7 @@ func GenerateInfraMap(ctx context.Context, state []byte) (*TFInfraMap, error) {
 		GraphDesc: gDesc,
 	}
 
-	logger.Info("generated terraform infra map", "nodes", len(g.Nodes), "edges", len(g.Edges))
+	logger.Debug("generated terraform infra map", "nodes", len(g.Nodes), "edges", len(g.Edges))
 
 	return tfinframap, nil
 }

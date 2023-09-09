@@ -48,6 +48,7 @@ type IDiagram interface {
 // Diagram implements IDiagram to generate a d2 diagram
 type Diagram struct {
 	ctx           context.Context // parent context
+	Filepath      string
 	TFInfraMap    *inframap.TFInfraMap
 	d2Graph       *d2graph.Graph
 	d2CompileOpts *d2lib.CompileOptions
@@ -55,10 +56,10 @@ type Diagram struct {
 }
 
 // NewDiagram creates a new Diagram instance
-func NewDiagram(ctx context.Context, m *inframap.TFInfraMap) *Diagram {
-
+func NewDiagram(ctx context.Context, m *inframap.TFInfraMap, filepath string) *Diagram {
 	return &Diagram{
 		ctx:           ctx,
+		Filepath:      filepath,
 		TFInfraMap:    m,
 		d2Graph:       nil,
 		d2CompileOpts: nil,
@@ -70,48 +71,48 @@ func NewDiagram(ctx context.Context, m *inframap.TFInfraMap) *Diagram {
 func (d *Diagram) Initialize() error {
 	logger := hclog.FromContext(d.ctx)
 
-	// Initialize a ruler to measure font glyphs
+	// initialize a ruler to measure font glyphs
 	ruler, err := textmeasure.NewRuler()
 	if err != nil {
 		return err
 	}
 
-	// Initialize layout resolver
+	// initialize layout resolver
 	layoutResolver := func(engine string) (d2graph.LayoutGraph, error) {
 		return d2dagrelayout.DefaultLayout, nil
 	}
 
-	// Initialize compile options
+	// initialize compile options
 	compileOpts := &d2lib.CompileOptions{
 		LayoutResolver: layoutResolver,
 		Ruler:          ruler,
 	}
 
-	// Initialize render options
+	// initialize render options
 	renderOpts := &d2svg.RenderOpts{
 		Pad: go2.Pointer(int64(d2svg.DEFAULT_PADDING)),
 	}
+
+	// initialize empty diagram
 	_, graph, err := d2lib.Compile(d.ctx, "", nil, nil)
 	if err != nil {
-		logger.Error("error creating empty graph", "error", err)
-		return err
+		return fmt.Errorf("error initializing diagram: %w", err)
 	}
 
 	d.d2Graph = graph
 	d.d2CompileOpts = compileOpts
 	d.d2RenderOpts = renderOpts
 
-	logger.Info("initialized d2 diagram")
+	logger.Info("initialized empty d2 diagram")
 
 	return nil
 }
-
-const icon = "https://raw.githubusercontent.com/tf2d2/icons/main/aws/resource/Analytics/AWS-Glue_AWS-Glue-for-Ray.svg"
 
 // Generate generates a D2 diagram
 func (d *Diagram) Generate() error {
 	logger := hclog.FromContext(d.ctx)
 
+	// compute d2 shapes
 	shapes := []*d2target.Shape{}
 	for _, n := range d.TFInfraMap.Graph.Nodes {
 		logger.Debug(fmt.Sprintf("%#v\n", n))
@@ -119,7 +120,7 @@ func (d *Diagram) Generate() error {
 		s := d2target.BaseShape()
 		s.ID = strings.ReplaceAll(n.Canonical, ".", "_")
 		s.Label = n.Resource.Name
-		iconLink, err := url.Parse(icon)
+		iconLink, err := url.Parse("")
 		if err != nil {
 			return err
 		}
@@ -127,15 +128,16 @@ func (d *Diagram) Generate() error {
 		shapes = append(shapes, s)
 	}
 
+	// compute d2 connections between shapes
 	conns := []*d2target.Connection{}
 	for _, e := range d.TFInfraMap.Graph.Edges {
 		sourceN, err := d.TFInfraMap.Graph.GetNodeByID(e.Source)
 		if err != nil {
-			return fmt.Errorf("error getting source node: %s", err)
+			return fmt.Errorf("error getting source node: %w", err)
 		}
 		targetN, err := d.TFInfraMap.Graph.GetNodeByID(e.Target)
 		if err != nil {
-			return fmt.Errorf("error getting target node: %s", err)
+			return fmt.Errorf("error getting target node: %w", err)
 		}
 
 		c := d2target.BaseConnection()
@@ -145,72 +147,65 @@ func (d *Diagram) Generate() error {
 		conns = append(conns, c)
 	}
 
-	// render template
+	// render d2 template with computed shapes and connections
 	t := d2tpl.New(shapes, conns)
 	out, err := t.Render("d2")
 	if err != nil {
 		return err
 	}
 
-	// compile from string
+	// compile d2 diagram from template render output
 	_, d.d2Graph, err = d2lib.Compile(d.ctx, out, d.d2CompileOpts, d.d2RenderOpts)
 	if err != nil {
 		return err
 	}
 
 	logger.Info("generated d2 diagram")
+
 	return nil
 }
 
-// Render renders a D2 diagram
-func (d *Diagram) Render() error {
+// Render renders both a D2 diagram and script if not `dryRun`.
+// Otherwise, D2 script is written to stdout
+func (d *Diagram) Render(dryRun bool) error {
 	logger := hclog.FromContext(d.ctx)
 
-	// Turn the graph into a script
+	// turn the graph into a script
 	script := d2format.Format(d.d2Graph.AST)
 
-	// Initialize a ruler to measure font glyphs
-	ruler, err := textmeasure.NewRuler()
+	// compile the script into a diagram
+	diagram, _, err := d2lib.Compile(d.ctx, script, d.d2CompileOpts, d.d2RenderOpts)
 	if err != nil {
 		return err
 	}
 
-	// Initialize layout resolver
-	layoutResolver := func(engine string) (d2graph.LayoutGraph, error) {
-		return d2dagrelayout.DefaultLayout, nil
-	}
+	if dryRun {
+		_, err = os.Stdout.WriteString(script + "\n")
+		if err != nil {
+			return err
+		}
+	} else {
+		// build filenames
+		scriptFilename := fmt.Sprintf("%s.d2", d.Filepath)
+		diagramFilename := fmt.Sprintf("%s.svg", d.Filepath)
+		// render to svg
+		out, _ := d2svg.Render(diagram, d.d2RenderOpts)
 
-	// Initialize compile options
-	compileOpts := &d2lib.CompileOptions{
-		LayoutResolver: layoutResolver,
-		Ruler:          ruler,
-	}
+		// write d2 script to output file path
+		err = os.WriteFile(filepath.Clean(scriptFilename), []byte(script), 0600)
+		if err != nil {
+			return err
+		}
 
-	// Initialize render options
-	renderOpts := &d2svg.RenderOpts{
-		Pad: go2.Pointer(int64(d2svg.DEFAULT_PADDING)),
-	}
+		// write d2 diagram to output file path
+		err = os.WriteFile(filepath.Clean(diagramFilename), out, 0600)
+		if err != nil {
+			return err
+		}
 
-	// Compile the script into a diagram
-	diagram, _, err := d2lib.Compile(d.ctx, script, compileOpts, renderOpts)
-	if err != nil {
-		return err
+		logger.Info("rendered d2 diagram")
+		logger.Info("output files", "diagram", diagramFilename, "script", scriptFilename)
 	}
-
-	// Render to SVG
-	out, _ := d2svg.Render(diagram, renderOpts)
-
-	// Write to disk
-	err = os.WriteFile(filepath.Clean("infra.d2"), []byte(script), 0600)
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile(filepath.Clean("infra.svg"), out, 0600)
-	if err != nil {
-		return err
-	}
-
-	logger.Info("rendered d2 diagram")
 
 	return nil
 }
