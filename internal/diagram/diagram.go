@@ -34,8 +34,11 @@ import (
 	"oss.terrastruct.com/d2/d2lib"
 	"oss.terrastruct.com/d2/d2renderers/d2svg"
 	"oss.terrastruct.com/d2/d2target"
+	"oss.terrastruct.com/d2/d2themes/d2themescatalog"
+	"oss.terrastruct.com/d2/lib/png"
 	"oss.terrastruct.com/d2/lib/textmeasure"
 	"oss.terrastruct.com/util-go/go2"
+	"oss.terrastruct.com/util-go/xmain"
 )
 
 // IDiagram defines how to generate a d2 diagram
@@ -90,7 +93,10 @@ func (d *Diagram) Initialize() error {
 
 	// initialize render options
 	renderOpts := &d2svg.RenderOpts{
-		Pad: go2.Pointer(int64(d2svg.DEFAULT_PADDING)),
+		Pad:     go2.Pointer[int64](d2svg.DEFAULT_PADDING),
+		Sketch:  go2.Pointer[bool](false),
+		Center:  go2.Pointer[bool](false),
+		ThemeID: go2.Pointer[int64](d2themescatalog.NeutralDefault.ID),
 	}
 
 	// initialize empty diagram
@@ -103,13 +109,13 @@ func (d *Diagram) Initialize() error {
 	d.d2CompileOpts = compileOpts
 	d.d2RenderOpts = renderOpts
 
-	logger.Info("initialized empty d2 diagram")
+	logger.Debug("initialized d2 diagram")
 
 	return nil
 }
 
 // Generate generates a D2 diagram
-func (d *Diagram) Generate() error {
+func (d *Diagram) Generate(dryRun bool) error {
 	logger := hclog.FromContext(d.ctx)
 
 	// compute d2 shapes
@@ -154,57 +160,97 @@ func (d *Diagram) Generate() error {
 		return err
 	}
 
-	// compile d2 diagram from template render output
+	// compile d2 diagram from rendered template output
 	_, d.d2Graph, err = d2lib.Compile(d.ctx, out, d.d2CompileOpts, d.d2RenderOpts)
 	if err != nil {
 		return err
 	}
 
-	logger.Info("generated d2 diagram")
-
-	return nil
-}
-
-// Render renders both a D2 diagram and script if not `dryRun`.
-// Otherwise, D2 script is written to stdout
-func (d *Diagram) Render(dryRun bool) error {
-	logger := hclog.FromContext(d.ctx)
-
-	// turn the graph into a script
-	script := d2format.Format(d.d2Graph.AST)
-
-	// compile the script into a diagram
-	diagram, _, err := d2lib.Compile(d.ctx, script, d.d2CompileOpts, d.d2RenderOpts)
+	// render d2 diagram
+	err = d.Write(dryRun)
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+// Write creates a file for both the rendered d2 diagram and compiled d2 script
+// provided it's not a dry run. Otherwise, the d2 script is written to stdout
+func (d *Diagram) Write(dryRun bool) error {
+	// turn the graph into a script
+	script := d2format.Format(d.d2Graph.AST)
+
 	if dryRun {
-		_, err = os.Stdout.WriteString(script + "\n")
+		_, err := os.Stdout.WriteString(script + "\n")
 		if err != nil {
-			return err
+			return fmt.Errorf("error writing to standard output: %w", err)
 		}
 	} else {
-		// build filenames
-		scriptFilename := fmt.Sprintf("%s.d2", d.Filepath)
-		diagramFilename := fmt.Sprintf("%s.svg", d.Filepath)
+		// compile the script into a diagram
+		diagram, _, err := d2lib.Compile(d.ctx, script, d.d2CompileOpts, d.d2RenderOpts)
+		if err != nil {
+			return err
+		}
+
 		// render to svg
-		out, _ := d2svg.Render(diagram, d.d2RenderOpts)
+		var svgData []byte
+		svgData, err = d2svg.Render(diagram, d.d2RenderOpts)
+		if err != nil {
+			return fmt.Errorf("error rendering svg data: %w", err)
+		}
 
-		// write d2 script to output file path
-		err = os.WriteFile(filepath.Clean(scriptFilename), []byte(script), 0600)
+		// write output files
+		err = writeContent(d.Filepath, script, svgData)
+		if err != nil {
+			return fmt.Errorf("error writing output to disk: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func writeContent(path string, scriptData string, svgData []byte) error {
+	fileExtension := filepath.Ext(path)
+	switch fileExtension {
+	case ".png":
+		// write PNG diagram to output file path
+		// chromium is used to convert SVG to PNG, it's installed if not available
+		var pw png.Playwright
+		pw, err := png.InitPlaywright()
+		if err != nil {
+			return err
+		}
+		defer func() {
+			cleanUpErr := pw.Cleanup()
+			if err != nil {
+				err = cleanUpErr
+			}
+		}()
+
+		var pngData []byte
+		pngData, err = png.ConvertSVG(&xmain.State{}, pw.Page, svgData)
 		if err != nil {
 			return err
 		}
 
-		// write d2 diagram to output file path
-		err = os.WriteFile(filepath.Clean(diagramFilename), out, 0600)
+		err = os.WriteFile(path, pngData, 0600)
 		if err != nil {
 			return err
 		}
+	default:
+		// write SVG diagram to output file path
+		err := os.WriteFile(path, svgData, 0600)
+		if err != nil {
+			return err
+		}
+	}
 
-		logger.Info("rendered d2 diagram")
-		logger.Info("output files", "diagram", diagramFilename, "script", scriptFilename)
+	// write d2 script to output file path
+	scriptFilepath := strings.ReplaceAll(path, fileExtension, ".d2")
+	err := os.WriteFile(scriptFilepath, []byte(scriptData), 0600)
+	if err != nil {
+		return err
 	}
 
 	return nil

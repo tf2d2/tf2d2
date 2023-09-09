@@ -23,6 +23,7 @@ import (
 	"github.com/tf2d2/tf2d2/internal/logging"
 	"github.com/tf2d2/tf2d2/internal/version"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +34,9 @@ func Execute(ctx context.Context) error {
 
 // NewCommand returns a new 'root' command
 func NewCommand(ctx context.Context) *cobra.Command {
-	r := cli.NewCliRuntime(ctx, logging.NewLogger())
+	cmdLogger := logging.NewLogger()
+	cmdCtx := hclog.WithContext(ctx, cmdLogger)
+	r := cli.NewCliRuntime(cmdCtx)
 	cmd := &cobra.Command{
 		Use:           "tf2d2",
 		Short:         "Generate d2 diagrams from Terraform",
@@ -53,8 +56,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&r.Config.Workspace, "workspace", "w", "", "name of terraform workspace")
 	cmd.PersistentFlags().StringVarP(&r.Config.Token, "token", "t", "", "terraform api token")
 	cmd.PersistentFlags().StringVarP(&r.Config.StateFile, "state-file", "f", "", "file path of terraform state")
-	cmd.PersistentFlags().StringVarP(&r.Config.OutputFile, "output-file", "o", "tf2d2", "name of output file")
-	cmd.PersistentFlags().StringVarP(&r.Config.OutputPath, "output-path", "p", "", "file path of output")
+	cmd.PersistentFlags().StringVarP(&r.Config.OutputFile, "output-file", "o", "tf2d2.svg", "file path of output diagram in .svg or .png format")
 	cmd.PersistentFlags().BoolVarP(&r.Config.Verbose, "verbose", "v", false, "show debug output")
 	cmd.PersistentFlags().BoolVarP(&r.Config.DryRun, "dry-run", "", false, "only print output")
 
