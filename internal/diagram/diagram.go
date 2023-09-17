@@ -24,10 +24,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	iconsAWS "github.com/tf2d2/icons/providers/aws"
+	iconsAzure "github.com/tf2d2/icons/providers/azurerm"
+	iconsGoogle "github.com/tf2d2/icons/providers/google"
 	d2tpl "github.com/tf2d2/tf2d2/internal/template"
 
 	"github.com/cycloidio/inframap/graph"
 	"github.com/hashicorp/go-hclog"
+
 	"oss.terrastruct.com/d2/d2format"
 	"oss.terrastruct.com/d2/d2graph"
 	"oss.terrastruct.com/d2/d2layouts/d2dagrelayout"
@@ -126,11 +130,12 @@ func (d *Diagram) Generate(dryRun bool) error {
 		s := d2target.BaseShape()
 		s.ID = strings.ReplaceAll(n.Canonical, ".", "_")
 		s.Label = n.Resource.Name
-		iconLink, err := url.Parse("")
+
+		iconURL, err := getIconURL(n.Resource.Name)
 		if err != nil {
 			return err
 		}
-		s.Icon = iconLink
+		s.Icon = iconURL
 		shapes = append(shapes, s)
 	}
 
@@ -254,4 +259,42 @@ func writeContent(path string, scriptData string, svgData []byte) error {
 	}
 
 	return nil
+}
+
+func getIconURL(resource string) (*url.URL, error) {
+	var iconURL *url.URL
+	prefix, _, _ := strings.Cut(resource, "_")
+	switch prefix {
+	case "aws":
+		r, err := iconsAWS.GetResource(resource)
+		if err != nil {
+			return nil, err
+		}
+		iconURL, err = url.Parse(r.IconURL)
+		if err != nil {
+			return nil, err
+		}
+	case "azurerm":
+		r, err := iconsAzure.GetResource(resource)
+		if err != nil {
+			return nil, err
+		}
+		iconURL, err = url.Parse(r.IconURL)
+		if err != nil {
+			return nil, err
+		}
+	case "google":
+		r, err := iconsGoogle.GetResource(resource)
+		if err != nil {
+			return nil, err
+		}
+		iconURL, err = url.Parse(r.IconURL)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return &url.URL{}, nil
+	}
+
+	return iconURL, nil
 }

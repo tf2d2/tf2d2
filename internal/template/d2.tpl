@@ -3,6 +3,7 @@
 {{ .ID }}: {
   label: {{ .Label }}
   {{- if ne (.Icon | urlToString) "" }}
+  shape: image
   icon: {{ .Icon | urlToString }}
   {{- end}}
   style: {
