@@ -25,13 +25,8 @@ import (
 	"github.com/hashicorp/go-hclog"
 )
 
-type TFInfraMap struct {
-	Graph     *graph.Graph
-	GraphDesc map[string]interface{}
-}
-
 // GenerateInfraMap generates an infra map from Terraform state
-func GenerateInfraMap(ctx context.Context, state []byte) (*TFInfraMap, error) {
+func GenerateInfraMap(ctx context.Context, state []byte) (*graph.Graph, error) {
 	logger := hclog.FromContext(ctx)
 
 	opt := generate.Options{
@@ -41,17 +36,12 @@ func GenerateInfraMap(ctx context.Context, state []byte) (*TFInfraMap, error) {
 		ExternalNodes: true,
 	}
 
-	g, gDesc, err := generate.FromState(state, opt)
+	g, _, err := generate.FromState(state, opt)
 	if err != nil {
 		return nil, fmt.Errorf("error generating infra map: %w", err)
 	}
 
-	tfinframap := &TFInfraMap{
-		Graph:     g,
-		GraphDesc: gDesc,
-	}
-
 	logger.Debug("generated terraform infra map", "nodes", len(g.Nodes), "edges", len(g.Edges))
 
-	return tfinframap, nil
+	return g, nil
 }

@@ -36,7 +36,7 @@ func Execute(ctx context.Context) error {
 func NewCommand(ctx context.Context) *cobra.Command {
 	cmdLogger := logging.NewLogger()
 	cmdCtx := hclog.WithContext(ctx, cmdLogger)
-	r := cli.NewCliRuntime(cmdCtx)
+	r := cli.NewRuntime(cmdCtx)
 	cmd := &cobra.Command{
 		Use:           "tf2d2",
 		Short:         "Generate d2 diagrams from Terraform",

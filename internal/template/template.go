@@ -31,12 +31,14 @@ import (
 //go:embed d2.tpl
 var tpl string
 
+// Template represents the template data used to render a d2 script
 type Template struct {
 	Shapes      []*d2target.Shape
 	Connections []*d2target.Connection
 	funcMap     gtpl.FuncMap
 }
 
+// New returns a new Template instance
 func New(shapes []*d2target.Shape, conns []*d2target.Connection) *Template {
 	return &Template{
 		Shapes:      shapes,

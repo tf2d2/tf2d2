@@ -31,8 +31,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// CliRuntime represents the CLI execution runtime
-type CliRuntime struct {
+// Runtime represents the CLI execution runtime
+type Runtime struct {
 	ctx    context.Context
 	cmd    *cobra.Command
 	Config *config
@@ -51,9 +51,9 @@ type config struct {
 	DryRun       bool   `mapstructure:"dry-run"`
 }
 
-// NewCliRuntime returns a new CLI runtime instance
-func NewCliRuntime(ctx context.Context) *CliRuntime {
-	return &CliRuntime{
+// NewRuntime returns a new CLI runtime instance
+func NewRuntime(ctx context.Context) *Runtime {
+	return &Runtime{
 		cmd:    nil,
 		ctx:    ctx,
 		Config: &config{},
@@ -61,7 +61,7 @@ func NewCliRuntime(ctx context.Context) *CliRuntime {
 }
 
 // PreRunE executes before `RunE` to configure Viper and logging level
-func (r *CliRuntime) PreRunE(cmd *cobra.Command, _ []string) error {
+func (r *Runtime) PreRunE(cmd *cobra.Command, _ []string) error {
 	logger := hclog.FromContext(r.ctx)
 
 	r.cmd = cmd
@@ -85,7 +85,7 @@ func (r *CliRuntime) PreRunE(cmd *cobra.Command, _ []string) error {
 }
 
 // RunE executes the logic to generate a d2 diagram from Terraform state
-func (r *CliRuntime) RunE(_ *cobra.Command, _ []string) error {
+func (r *Runtime) RunE(_ *cobra.Command, _ []string) error {
 	logger := hclog.FromContext(r.ctx)
 
 	// read local or remote Terraform state
@@ -126,7 +126,7 @@ func (r *CliRuntime) RunE(_ *cobra.Command, _ []string) error {
 }
 
 // readConfig loads Viper config
-func (r *CliRuntime) readConfig() error {
+func (r *Runtime) readConfig() error {
 	logger := hclog.FromContext(r.ctx)
 
 	if r.cmd.Flags().Changed("config") {
@@ -160,7 +160,7 @@ func (r *CliRuntime) readConfig() error {
 }
 
 // bindFlags binds all Cobra flags to Viper config
-func (r *CliRuntime) bindFlags() error {
+func (r *Runtime) bindFlags() error {
 	fs := r.cmd.Flags()
 	if err := viper.BindPFlags(fs); err != nil {
 		return err
@@ -169,7 +169,7 @@ func (r *CliRuntime) bindFlags() error {
 }
 
 // generateContent uses Terraform state to generate and render a d2 diagram
-func (r *CliRuntime) generateContent(state []byte) error {
+func (r *Runtime) generateContent(state []byte) error {
 	logger := hclog.FromContext(r.ctx)
 
 	// generate output

@@ -24,9 +24,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tf2d2/tf2d2/internal/inframap"
 	d2tpl "github.com/tf2d2/tf2d2/internal/template"
 
+	"github.com/cycloidio/inframap/graph"
 	"github.com/hashicorp/go-hclog"
 	"oss.terrastruct.com/d2/d2format"
 	"oss.terrastruct.com/d2/d2graph"
@@ -52,14 +52,14 @@ type IDiagram interface {
 type Diagram struct {
 	ctx           context.Context // parent context
 	Filepath      string
-	TFInfraMap    *inframap.TFInfraMap
+	TFInfraMap    *graph.Graph
 	d2Graph       *d2graph.Graph
 	d2CompileOpts *d2lib.CompileOptions
 	d2RenderOpts  *d2svg.RenderOpts
 }
 
 // NewDiagram creates a new Diagram instance
-func NewDiagram(ctx context.Context, m *inframap.TFInfraMap, filepath string) *Diagram {
+func NewDiagram(ctx context.Context, m *graph.Graph, filepath string) *Diagram {
 	return &Diagram{
 		ctx:           ctx,
 		Filepath:      filepath,
@@ -120,7 +120,7 @@ func (d *Diagram) Generate(dryRun bool) error {
 
 	// compute d2 shapes
 	shapes := []*d2target.Shape{}
-	for _, n := range d.TFInfraMap.Graph.Nodes {
+	for _, n := range d.TFInfraMap.Nodes {
 		logger.Debug(fmt.Sprintf("%#v\n", n))
 
 		s := d2target.BaseShape()
@@ -136,12 +136,12 @@ func (d *Diagram) Generate(dryRun bool) error {
 
 	// compute d2 connections between shapes
 	conns := []*d2target.Connection{}
-	for _, e := range d.TFInfraMap.Graph.Edges {
-		sourceN, err := d.TFInfraMap.Graph.GetNodeByID(e.Source)
+	for _, e := range d.TFInfraMap.Edges {
+		sourceN, err := d.TFInfraMap.GetNodeByID(e.Source)
 		if err != nil {
 			return fmt.Errorf("error getting source node: %w", err)
 		}
-		targetN, err := d.TFInfraMap.Graph.GetNodeByID(e.Target)
+		targetN, err := d.TFInfraMap.GetNodeByID(e.Target)
 		if err != nil {
 			return fmt.Errorf("error getting target node: %w", err)
 		}
