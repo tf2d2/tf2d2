@@ -27,7 +27,7 @@ linters-settings:
       - name: error-naming
       - name: error-return
       - name: error-strings
-      # - name: exported
+      - name: exported
       # - name: if-return
       - name: increment-decrement
       - name: indent-error-flow
