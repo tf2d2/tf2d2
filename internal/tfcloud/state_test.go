@@ -13,11 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// MockStateVersionService is a mock implementation of the StateVersionService for testing purposes
 type MockStateVersionService struct {
 	sv      *tfe.StateVersion
 	isError bool
 }
 
+// GetState is a mock implementation of the GetState method
 func (m *MockStateVersionService) GetState(_ context.Context, _ string, _ string) (*tfe.StateVersion, error) {
 	if m.isError {
 		return nil, errors.New("error")
