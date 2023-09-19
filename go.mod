@@ -28,6 +28,7 @@ require (
 	github.com/cycloidio/flatmap v1.0.0 // indirect
 	github.com/cycloidio/tfdocs v0.0.0-20210325124514-48185a336974 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.8.1 // indirect
 	github.com/dop251/goja v0.0.0-20230122112309-96b1610dd4f7 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20221012082141-d21ac8e2de85 // indirect
@@ -67,6 +68,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/playwright-community/playwright-go v0.2000.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
@@ -106,6 +108,7 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/caarlos0/go-version v0.1.1
 	github.com/cycloidio/inframap v0.6.7
+	github.com/golang/mock v1.6.0
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.5.0
@@ -113,6 +116,7 @@ require (
 	github.com/hashicorp/go-slug v0.12.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/jsonapi v0.0.0-20210826224640-ee7dae0fb22d // indirect
+	github.com/stretchr/testify v1.8.4
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 )
