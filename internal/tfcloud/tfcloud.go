@@ -18,12 +18,12 @@ package tfcloud
 
 import "github.com/hashicorp/go-tfe"
 
-// TFCloud provides services to interact with the Terraform API
+// TFCloud represents services that interact with the Terraform API
 type TFCloud struct {
 	StateVersionService
 }
 
-// NewTFCloud creates an instance with services to interact with the Terraform API
+// NewTFCloud creates an instance with services that interact with the Terraform API
 func NewTFCloud(c *tfe.Client) *TFCloud {
 	return &TFCloud{
 		StateVersionService: NewStateVersionService(c),

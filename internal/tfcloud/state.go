@@ -19,6 +19,7 @@ package tfcloud
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -39,33 +40,26 @@ func (c *GetStateVersion) Run() (json.RawMessage, error) {
 
 	stateVersionRes, err := c.TFCloud.StateVersionService.GetState(c.Context, c.Organization, c.Workspace)
 	if err != nil {
-		logger.Error("error getting terraform state version", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("error getting terraform state version: %s", err.Error())
 	}
 
 	stateDownloadReq, err := http.NewRequestWithContext(c.Context, http.MethodGet, stateVersionRes.DownloadURL, nil)
 	if err != nil {
-		logger.Error("error downloading json state", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("error making http request to download json state: %s", err.Error())
 	}
 
 	stateDownloadRes, err := http.DefaultClient.Do(stateDownloadReq)
 	if err != nil {
-		logger.Error("error making http request to download json state", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("error downloading json state: %s", err.Error())
 	}
-	defer func() {
-		err = stateDownloadRes.Body.Close()
-		if err != nil {
-			logger.Error("error closing download response body", "error", err)
-		}
-	}()
+	defer stateDownloadRes.Body.Close() //nolint:errcheck
 
 	stateJSON, err := io.ReadAll(stateDownloadRes.Body)
 	if err != nil {
-		logger.Error("error reading state download response body", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("error reading state download response body: %s", err.Error())
 	}
+
+	logger.Debug("successfully downloaded json terraform state")
 
 	return stateJSON, nil
 }

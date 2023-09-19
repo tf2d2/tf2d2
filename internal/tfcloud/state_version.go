@@ -19,6 +19,7 @@ package tfcloud
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
@@ -58,14 +59,12 @@ func (s *stateVersionService) GetState(ctx context.Context, orgName string, work
 
 	workspaceRead, err := s.tfe.Workspaces.Read(ctx, orgName, workspaceName)
 	if err != nil {
-		logger.Error("error reading workspace", "organization", orgName, "workspace", workspaceName, "error", err)
-		return nil, err
+		return nil, fmt.Errorf("error reading workspace %s/%s: %s", orgName, workspaceName, err.Error())
 	}
 
 	currentSV, err := s.tfe.StateVersions.ReadCurrent(ctx, workspaceRead.ID)
 	if err != nil {
-		logger.Error("error reading current state version", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("error reading current state version: %s", err.Error())
 	}
 
 	if !currentSV.ResourcesProcessed {
@@ -83,10 +82,11 @@ func (s *stateVersionService) GetState(ctx context.Context, orgName string, work
 		})
 
 		if retryErr != nil {
-			logger.Error("error waiting for current state version to finish processing", "error", retryErr)
-			return nil, retryErr
+			return nil, fmt.Errorf("error waiting for current state version to finish processing: %s", retryErr.Error())
 		}
 	}
+
+	logger.Debug("successfully retrieved terraform state version")
 
 	return currentSV, nil
 }
