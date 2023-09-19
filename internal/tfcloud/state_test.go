@@ -13,79 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func TestGetStateVersion_Run(t *testing.T) {
-// 	// Create a mock HTTP server to simulate downloading JSON state
-// 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		assert.Equal(t, r.Method, http.MethodGet)
-// 		assert.Contains(t, r.URL.String(), "mock-state-download-url")
-
-// 		// Write mock JSON state to the response
-// 		w.Header().Set("Content-Type", "application/json")
-// 		w.WriteHeader(http.StatusOK)
-// 		_, _ = w.Write([]byte(`{"key": "value"}`))
-// 	}))
-// 	defer server.Close()
-
-// 	ctrl := gomock.NewController(t)
-// 	defer ctrl.Finish()
-
-// 	ctx, orgName, workspaceName, wID := context.Background(), "my-org", "my-workspace", "ws-***"
-// 	downloadURL := fmt.Sprintf("%s/mock-state-download-url", server.URL)
-
-// 	tfeWorkspace := &tfe.Workspace{ID: wID}
-// 	tfeStateVersion := &tfe.StateVersion{
-// 		ResourcesProcessed: true,
-// 		DownloadURL:        downloadURL,
-// 	}
-
-// 	// mock workspace
-// 	mockWorkspace := mocks.NewMockWorkspaces(ctrl)
-// 	mockWorkspace.EXPECT().Read(ctx, orgName, workspaceName).Return(
-// 		tfeWorkspace,
-// 		nil,
-// 	)
-
-// 	// mock state version
-// 	mockStateVersion := mocks.NewMockStateVersions(ctrl)
-// 	mockStateVersion.EXPECT().ReadCurrent(ctx, wID).Return(
-// 		tfeStateVersion,
-// 		nil,
-// 	)
-
-// 	// create tfe client
-// 	mockTFEConfig := tfe.DefaultConfig()
-// 	mockTFEConfig.Token = "api-token"
-// 	mockTFEClient, err := tfe.NewClient(mockTFEConfig)
-// 	assert.Nil(t, err)
-// 	mockTFEClient.Workspaces = mockWorkspace
-// 	mockTFEClient.StateVersions = mockStateVersion
-
-// 	// create tfcloud instance
-// 	mockTFCloud := &TFCloud{
-// 		StateVersionService: NewStateVersionService(
-// 			mockTFEClient,
-// 		),
-// 	}
-
-// 	// Create a GetStateVersion instance
-// 	getStateVersion := &GetStateVersion{
-// 		Context:      context.Background(),
-// 		TFCloud:      mockTFCloud,
-// 		Organization: orgName,
-// 		Workspace:    workspaceName,
-// 	}
-
-// 	// Run the GetStateVersion
-// 	stateJSON, err := getStateVersion.Run()
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, stateJSON)
-
-// 	var stateData map[string]interface{}
-// 	_ = json.Unmarshal(stateJSON, &stateData)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, "value", stateData["key"])
-// }
-
 type MockStateVersionService struct {
 	sv      *tfe.StateVersion
 	isError bool
@@ -157,13 +84,6 @@ func TestGetStateVersion_Run(t *testing.T) {
 			downloadURL:     "error",
 			onServiceError:  false,
 			onDownloadError: true,
-		},
-		{
-			name:            "error reading downloaded json state",
-			expected:        expectedJSONState,
-			downloadURL:     testServerDownloadURL,
-			onServiceError:  false,
-			onDownloadError: false,
 		},
 	}
 

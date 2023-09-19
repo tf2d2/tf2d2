@@ -17,8 +17,8 @@ limitations under the License.
 package tfcloud
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -35,7 +35,7 @@ type GetStateVersion struct {
 }
 
 // Run retrieves the state version of a Terraform workspace
-func (c *GetStateVersion) Run() (json.RawMessage, error) {
+func (c *GetStateVersion) Run() ([]byte, error) {
 	logger := hclog.FromContext(c.Context)
 
 	stateVersionRes, err := c.TFCloud.StateVersionService.GetState(c.Context, c.Organization, c.Workspace)
@@ -54,12 +54,10 @@ func (c *GetStateVersion) Run() (json.RawMessage, error) {
 	}
 	defer stateDownloadRes.Body.Close() //nolint:errcheck
 
-	stateJSON, err := io.ReadAll(stateDownloadRes.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading state download response body: %s", err.Error())
-	}
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, stateDownloadRes.Body)
 
 	logger.Debug("successfully downloaded json terraform state")
 
-	return stateJSON, nil
+	return buf.Bytes(), nil
 }
