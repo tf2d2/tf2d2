@@ -29,6 +29,9 @@ lint:
 test:
 	go test -v -covermode=atomic -coverprofile=coverage.out ./...
 
+test-html:
+	go tool cover -html=coverage.out
+
 pre-commit:
 	pre-commit run --all-files
 
