@@ -13,7 +13,7 @@ import (
 func TestGenerateInfraMap_Success(t *testing.T) {
 	ctx := context.Background()
 
-	mockState, err := utils.GetExpected("valid.golden")
+	mockState, err := utils.GetExpected("valid.expected")
 	assert.Nil(t, err)
 
 	logger := hclog.New(&hclog.LoggerOptions{})
@@ -31,15 +31,15 @@ func TestGenerateInfraMap_Error(t *testing.T) {
 	}{
 		{
 			name:     "invalid state",
-			filename: "invalid.golden",
+			filename: "invalid.expected",
 		},
 		{
 			name:     "invalid version",
-			filename: "invalid_version.golden",
+			filename: "invalid_version.expected",
 		},
 		{
 			name:     "missing version",
-			filename: "missing_version.golden",
+			filename: "missing_version.expected",
 		},
 	}
 	for _, tc := range testCases {
