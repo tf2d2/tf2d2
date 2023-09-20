@@ -59,29 +59,3 @@ func TestGenerateInfraMap_Error(t *testing.T) {
 	}
 
 }
-
-// func TestGenerateInfraMap_ErrorGeneratingMap(t *testing.T) {
-// 	// Create a mock context
-// 	ctx := context.Background()
-
-// 	// Create a mock Terraform state
-// 	mockState := []byte("mocked-terraform-state")
-
-// 	// Create a logger with debugging enabled
-// 	logger := hclog.New(&hclog.LoggerOptions{
-// 		Output:     nil,
-// 		Level:      hclog.Debug,
-// 		JSONFormat: false,
-// 	})
-
-// 	// Set the logger as the logger for the context
-// 	ctx = hclog.WithContext(ctx, logger)
-
-// 	// Call the GenerateInfraMap function
-// 	infraMap, err := GenerateInfraMap(ctx, mockState)
-
-// 	// Assertions
-// 	assert.Error(t, err)
-// 	assert.Nil(t, infraMap)
-// 	assert.Contains(t, err.Error(), "error generating infra map")
-// }
