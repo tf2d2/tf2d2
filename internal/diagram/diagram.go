@@ -180,8 +180,9 @@ func (d *Diagram) Generate(dryRun bool) error {
 	return nil
 }
 
-// Write creates a file for both the rendered d2 diagram and compiled d2 script
-// provided it's not a dry run. Otherwise, the d2 script is written to stdout
+// Write creates an output file for both the rendered d2 diagram
+// and compiled d2 script. If it's a dry run, no output files are
+// created but the d2 script is written to stdout
 func (d *Diagram) Write(dryRun bool) error {
 	// turn the graph into a script
 	script := d2format.Format(d.d2Graph.AST)
@@ -270,28 +271,19 @@ func getIconURL(resource string) (*url.URL, error) {
 		if err != nil {
 			return nil, err
 		}
-		iconURL, err = url.Parse(r.IconURL)
-		if err != nil {
-			return nil, err
-		}
+		iconURL, _ = url.Parse(r.IconURL)
 	case "azurerm":
 		r, err := iconsAzure.GetResource(resource)
 		if err != nil {
 			return nil, err
 		}
-		iconURL, err = url.Parse(r.IconURL)
-		if err != nil {
-			return nil, err
-		}
+		iconURL, _ = url.Parse(r.IconURL)
 	case "google":
 		r, err := iconsGoogle.GetResource(resource)
 		if err != nil {
 			return nil, err
 		}
-		iconURL, err = url.Parse(r.IconURL)
-		if err != nil {
-			return nil, err
-		}
+		iconURL, _ = url.Parse(r.IconURL)
 	default:
 		return &url.URL{}, nil
 	}
