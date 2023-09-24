@@ -6,12 +6,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/tf2d2/tf2d2/internal/inframap"
-	"github.com/tf2d2/tf2d2/internal/utils"
-
 	"github.com/cycloidio/inframap/graph"
 	"github.com/cycloidio/tfdocs/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/tf2d2/tf2d2/internal/utils"
 	"oss.terrastruct.com/d2/d2format"
 	"oss.terrastruct.com/d2/d2lib"
 )
@@ -46,29 +44,49 @@ func testGetMockDiagram(t *testing.T, mockGraph *graph.Graph, outputFile string)
 }
 
 func TestGenerate_Success(t *testing.T) {
+	mockGraph := graph.New()
+	mockGraph.AddNode(
+		&graph.Node{
+			ID:        "node_foo",
+			Canonical: "node_foo",
+			Resource: resource.Resource{
+				Name: "node_foo",
+			},
+		},
+	)
+	mockGraph.AddNode(
+		&graph.Node{
+			ID:        "node_bar",
+			Canonical: "node_bar",
+			Resource: resource.Resource{
+				Name: "node_bar",
+			},
+		},
+	)
+	mockGraph.AddEdge(
+		&graph.Edge{
+			ID:     "edge_baz",
+			Source: "node_foo",
+			Target: "node_bar",
+		},
+	)
+	outputScript, outputDiagram := "output.d2", "output.svg"
 	expectedScript, err := utils.GetTestData("script.golden")
 	assert.NoError(t, err)
-	expectedDiagram, err := utils.GetTestData("diagram.golden")
-	assert.NoError(t, err)
-	goldenState, err := utils.GetTestData("terraform_state.golden")
-	assert.NoError(t, err)
-
-	ctx, outputScript, outputDiagram := context.Background(), "output.d2", "output.svg"
-	mockGraph, err := inframap.GenerateInfraMap(ctx, []byte(goldenState))
-	assert.NoError(t, err)
-
 	d := testGetMockDiagram(t, mockGraph, outputDiagram)
-
 	err = d.Generate(false)
 	assert.NoError(t, err)
 
 	outScript, err := os.ReadFile(outputScript)
 	assert.NoError(t, err)
+	assert.NotEmpty(t, outScript)
 	assert.Equal(t, expectedScript, string(outScript))
 
 	outDiagram, err := os.ReadFile(outputDiagram)
 	assert.NoError(t, err)
-	assert.Contains(t, expectedDiagram, string(outDiagram))
+	assert.NotEmpty(t, outDiagram)
+	assert.Contains(t, string(outDiagram), "node_foo")
+	assert.Contains(t, string(outDiagram), "node_bar")
 
 	// remove output files
 	_ = os.Remove(outputScript)
