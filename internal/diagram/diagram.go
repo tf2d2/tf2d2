@@ -227,12 +227,7 @@ func writeContent(path string, scriptData string, svgData []byte) error {
 		if err != nil {
 			return err
 		}
-		defer func() {
-			cleanUpErr := pw.Cleanup()
-			if err != nil {
-				err = cleanUpErr
-			}
-		}()
+		defer pw.Cleanup() //nolint:errcheck
 
 		var pngData []byte
 		pngData, err = png.ConvertSVG(&xmain.State{}, pw.Page, svgData)
@@ -240,13 +235,13 @@ func writeContent(path string, scriptData string, svgData []byte) error {
 			return err
 		}
 
-		err = os.WriteFile(path, pngData, 0600)
+		err = os.WriteFile(path, pngData, 0640)
 		if err != nil {
 			return err
 		}
 	default:
 		// write SVG diagram to output file path
-		err := os.WriteFile(path, svgData, 0600)
+		err := os.WriteFile(path, svgData, 0640)
 		if err != nil {
 			return err
 		}
@@ -254,12 +249,9 @@ func writeContent(path string, scriptData string, svgData []byte) error {
 
 	// write d2 script to output file path
 	scriptFilepath := strings.ReplaceAll(path, fileExtension, ".d2")
-	err := os.WriteFile(scriptFilepath, []byte(scriptData), 0600)
-	if err != nil {
-		return err
-	}
+	err := os.WriteFile(scriptFilepath, []byte(scriptData), 0640)
 
-	return nil
+	return err
 }
 
 func getIconURL(resource string) (*url.URL, error) {
