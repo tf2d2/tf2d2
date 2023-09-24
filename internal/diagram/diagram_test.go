@@ -16,30 +16,33 @@ import (
 	"oss.terrastruct.com/d2/d2lib"
 )
 
-func TestNewDiagram(t *testing.T) {
+func testGetMockDiagram(t *testing.T, mockGraph *graph.Graph, outputFile string) *Diagram {
+	t.Helper()
+
 	ctx := context.Background()
-	mockGraph := &graph.Graph{}
 
-	diagram := NewDiagram(ctx, mockGraph, "output.svg")
-	assert.NotNil(t, diagram)
-	assert.Equal(t, ctx, diagram.ctx)
-	assert.Equal(t, "output.svg", diagram.Filepath)
-	assert.Equal(t, mockGraph, diagram.TFInfraMap)
-	assert.Nil(t, diagram.d2Graph)
-	assert.Nil(t, diagram.d2CompileOpts)
-	assert.Nil(t, diagram.d2RenderOpts)
-}
+	if mockGraph == nil {
+		mockGraph = &graph.Graph{}
+	}
 
-func TestInitialize(t *testing.T) {
-	ctx := context.Background()
-	mockGraph := &graph.Graph{}
-	d := NewDiagram(ctx, mockGraph, "output.svg")
+	mockDiagram := NewDiagram(ctx, mockGraph, outputFile)
+	assert.NotNil(t, mockDiagram)
+	assert.Equal(t, ctx, mockDiagram.ctx)
+	assert.Equal(t, outputFile, mockDiagram.Filepath)
+	assert.Equal(t, mockGraph, mockDiagram.TFInfraMap)
+	assert.Nil(t, mockDiagram.d2Diagram)
+	assert.Nil(t, mockDiagram.d2Graph)
+	assert.Nil(t, mockDiagram.d2CompileOpts)
+	assert.Nil(t, mockDiagram.d2RenderOpts)
 
-	err := d.Initialize()
+	err := mockDiagram.Initialize()
 	assert.NoError(t, err)
-	assert.NotNil(t, d.d2Graph)
-	assert.NotNil(t, d.d2CompileOpts)
-	assert.NotNil(t, d.d2RenderOpts)
+	assert.NotNil(t, mockDiagram.d2Diagram)
+	assert.NotNil(t, mockDiagram.d2Graph)
+	assert.NotNil(t, mockDiagram.d2CompileOpts)
+	assert.NotNil(t, mockDiagram.d2RenderOpts)
+
+	return mockDiagram
 }
 
 func TestWrite_DryRun(t *testing.T) {
@@ -61,12 +64,7 @@ func TestWrite_DryRun(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-			mockGraph := &graph.Graph{}
-
-			d := NewDiagram(ctx, mockGraph, "output.svg")
-			err := d.Initialize()
-			assert.NoError(t, err)
+			d := testGetMockDiagram(t, nil, "")
 
 			// create mock d2 graph from script
 			_, d.d2Graph, _ = d2lib.Compile(d.ctx, tc.expected, d.d2CompileOpts, d.d2RenderOpts)
@@ -77,7 +75,7 @@ func TestWrite_DryRun(t *testing.T) {
 			os.Stdout = w
 
 			// Verify the script is written to stdout
-			err = d.Write(true)
+			err := d.Write(true)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, d2format.Format(d.d2Graph.AST))
 
@@ -102,9 +100,7 @@ func TestGenerate_Success(t *testing.T) {
 	mockGraph, err := inframap.GenerateInfraMap(ctx, []byte(goldenState))
 	assert.NoError(t, err)
 
-	d := NewDiagram(ctx, mockGraph, outputDiagram)
-	err = d.Initialize()
-	assert.NoError(t, err)
+	d := testGetMockDiagram(t, mockGraph, outputDiagram)
 
 	err = d.Generate(false)
 	assert.NoError(t, err)
@@ -197,11 +193,8 @@ func TestGenerate_Errors(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-			d := NewDiagram(ctx, tc.graph, "output.svg")
+			d := testGetMockDiagram(t, tc.graph, "output.svg")
 
-			err := d.Initialize()
-			assert.NoError(t, err)
 			err = d.Generate(true)
 			assert.Error(t, err)
 			assert.EqualError(t, err, tc.expected)
@@ -230,13 +223,11 @@ func TestGenerate_CompileError(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	ctx := context.Background()
-	d := NewDiagram(ctx, compileErrGraph, "output.svg")
+	d := testGetMockDiagram(t, compileErrGraph, "output.svg")
 
-	err = d.Initialize()
-	assert.NoError(t, err)
 	// induce compile error
 	d.d2CompileOpts = &d2lib.CompileOptions{}
+
 	err = d.Generate(true)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error compiling d2 graph")
@@ -271,18 +262,13 @@ func TestWrite_FileOutput(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-			mockGraph := &graph.Graph{}
-
-			d := NewDiagram(ctx, mockGraph, tc.filename)
-			err := d.Initialize()
-			assert.NoError(t, err)
+			d := testGetMockDiagram(t, nil, tc.filename)
 
 			// create mock d2 graph from script
 			_, d.d2Graph, _ = d2lib.Compile(d.ctx, tc.expected, d.d2CompileOpts, d.d2RenderOpts)
 
 			// Verify output files are created for d2 script and diagram
-			err = d.Write(false)
+			err := d.Write(false)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, d2format.Format(d.d2Graph.AST))
 
