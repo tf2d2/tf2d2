@@ -57,6 +57,7 @@ type Diagram struct {
 	ctx           context.Context // parent context
 	Filepath      string
 	TFInfraMap    *graph.Graph
+	d2Diagram     *d2target.Diagram
 	d2Graph       *d2graph.Graph
 	d2CompileOpts *d2lib.CompileOptions
 	d2RenderOpts  *d2svg.RenderOpts
@@ -68,6 +69,7 @@ func NewDiagram(ctx context.Context, m *graph.Graph, filepath string) *Diagram {
 		ctx:           ctx,
 		Filepath:      filepath,
 		TFInfraMap:    m,
+		d2Diagram:     nil,
 		d2Graph:       nil,
 		d2CompileOpts: nil,
 		d2RenderOpts:  nil,
@@ -104,11 +106,12 @@ func (d *Diagram) Initialize() error {
 	}
 
 	// initialize empty diagram
-	_, graph, err := d2lib.Compile(d.ctx, "", nil, nil)
+	diagram, graph, err := d2lib.Compile(d.ctx, "", nil, nil)
 	if err != nil {
 		return fmt.Errorf("error initializing diagram: %w", err)
 	}
 
+	d.d2Diagram = diagram
 	d.d2Graph = graph
 	d.d2CompileOpts = compileOpts
 	d.d2RenderOpts = renderOpts
@@ -166,7 +169,7 @@ func (d *Diagram) Generate(dryRun bool) error {
 	}
 
 	// compile d2 diagram from rendered template output
-	_, d.d2Graph, err = d2lib.Compile(d.ctx, out, d.d2CompileOpts, d.d2RenderOpts)
+	d.d2Diagram, d.d2Graph, err = d2lib.Compile(d.ctx, out, d.d2CompileOpts, d.d2RenderOpts)
 	if err != nil {
 		return fmt.Errorf("error compiling d2 graph: %s", err.Error())
 	}
@@ -187,15 +190,9 @@ func (d *Diagram) Write(dryRun bool) error {
 			return fmt.Errorf("error writing to standard output: %w", err)
 		}
 	} else {
-		// compile the script into a diagram
-		diagram, _, err := d2lib.Compile(d.ctx, script, d.d2CompileOpts, d.d2RenderOpts)
-		if err != nil {
-			return err
-		}
-
 		// render to svg
 		var svgData []byte
-		svgData, err = d2svg.Render(diagram, d.d2RenderOpts)
+		svgData, err := d2svg.Render(d.d2Diagram, d.d2RenderOpts)
 		if err != nil {
 			return fmt.Errorf("error rendering svg data: %w", err)
 		}
