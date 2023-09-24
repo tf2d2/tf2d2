@@ -27,6 +27,6 @@ jobs:
         with:
           framework: github_actions
           directory: ./github/workflows/
-          quite: true
+          quiet: true
           compact: true
           output_format: github_failed_only
