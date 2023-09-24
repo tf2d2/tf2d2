@@ -3,6 +3,7 @@ module github.com/tf2d2/tf2d2
 go 1.21.1
 
 require (
+	github.com/cycloidio/tfdocs v0.0.0-20210325124514-48185a336974
 	github.com/hashicorp/go-tfe v1.32.0
 	github.com/sethvargo/go-retry v0.2.4
 	github.com/spf13/cobra v1.7.0
@@ -26,7 +27,6 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/apparentlymart/go-versions v1.0.1 // indirect
 	github.com/cycloidio/flatmap v1.0.0 // indirect
-	github.com/cycloidio/tfdocs v0.0.0-20210325124514-48185a336974 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.8.1 // indirect

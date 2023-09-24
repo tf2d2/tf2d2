@@ -76,7 +76,7 @@ func TestRender(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			expected, err := utils.GetExpected("shapes_icons_conns.expected")
+			expected, err := utils.GetTestData("shapes_icons_conns.expected")
 			assert.Nil(err)
 
 			tpl := New(tc.shapes, tc.conns)

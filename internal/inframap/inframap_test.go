@@ -13,7 +13,7 @@ import (
 func TestGenerateInfraMap_Success(t *testing.T) {
 	ctx := context.Background()
 
-	mockState, err := utils.GetExpected("valid.expected")
+	mockState, err := utils.GetTestData("valid.expected")
 	assert.Nil(t, err)
 
 	logger := hclog.New(&hclog.LoggerOptions{})
@@ -46,7 +46,7 @@ func TestGenerateInfraMap_Error(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			mockState, err := utils.GetExpected(tc.filename)
+			mockState, err := utils.GetTestData(tc.filename)
 			assert.Nil(t, err)
 
 			logger := hclog.New(&hclog.LoggerOptions{})
