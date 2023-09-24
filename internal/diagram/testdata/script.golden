@@ -1,0 +1,31 @@
+module_policy_aws_iam_policy_policy: {
+  label: aws_iam_policy
+  style: {
+    opacity: 1
+    stroke-dash: 0
+    stroke-width: 2
+    bold: true
+  }
+}
+module_roleA_aws_iam_role_this: {
+  label: aws_iam_role
+  shape: image
+  icon: https://raw.githubusercontent.com/tf2d2/icons/main/aws/resource/Security-Identity-Compliance/AWS-Identity-Access-Management_Role.svg
+  style: {
+    opacity: 1
+    stroke-dash: 0
+    stroke-width: 2
+    bold: true
+  }
+}
+module_roleA_aws_iam_role_policy_attachment_custom: {
+  label: aws_iam_role_policy_attachment
+  style: {
+    opacity: 1
+    stroke-dash: 0
+    stroke-width: 2
+    bold: true
+  }
+}
+module_roleA_aws_iam_role_policy_attachment_custom -> module_policy_aws_iam_policy_policy
+module_roleA_aws_iam_role_policy_attachment_custom -> module_roleA_aws_iam_role_this

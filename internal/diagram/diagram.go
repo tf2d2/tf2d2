@@ -144,11 +144,11 @@ func (d *Diagram) Generate(dryRun bool) error {
 	for _, e := range d.TFInfraMap.Edges {
 		sourceN, err := d.TFInfraMap.GetNodeByID(e.Source)
 		if err != nil {
-			return fmt.Errorf("error getting source node: %w", err)
+			return fmt.Errorf("error getting source node: %s", e.Source)
 		}
 		targetN, err := d.TFInfraMap.GetNodeByID(e.Target)
 		if err != nil {
-			return fmt.Errorf("error getting target node: %w", err)
+			return fmt.Errorf("error getting target node: %s", e.Target)
 		}
 
 		c := d2target.BaseConnection()
@@ -168,16 +168,10 @@ func (d *Diagram) Generate(dryRun bool) error {
 	// compile d2 diagram from rendered template output
 	_, d.d2Graph, err = d2lib.Compile(d.ctx, out, d.d2CompileOpts, d.d2RenderOpts)
 	if err != nil {
-		return err
+		return fmt.Errorf("error compiling d2 graph: %s", err)
 	}
 
-	// render d2 diagram
-	err = d.Write(dryRun)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.Write(dryRun)
 }
 
 // Write creates an output file for both the rendered d2 diagram
