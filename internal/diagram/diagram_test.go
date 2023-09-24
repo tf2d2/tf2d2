@@ -13,7 +13,6 @@ import (
 	"github.com/cycloidio/tfdocs/resource"
 	"github.com/stretchr/testify/assert"
 	"oss.terrastruct.com/d2/d2format"
-	"oss.terrastruct.com/d2/d2graph"
 	"oss.terrastruct.com/d2/d2lib"
 )
 
@@ -70,7 +69,7 @@ func TestWrite_DryRun(t *testing.T) {
 			assert.NoError(t, err)
 
 			// create mock d2 graph from script
-			d.d2Graph = compileMockD2Graph(tc.expected, d)
+			_, d.d2Graph, _ = d2lib.Compile(d.ctx, tc.expected, d.d2CompileOpts, d.d2RenderOpts)
 
 			// Store the original os.Stdout and redirect it to a pipe
 			originalStdout := os.Stdout
@@ -225,7 +224,7 @@ func TestGenerate_CompileError(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	err = compileErrGraph.AddEdge(&graph.Edge{
-		ID:     "edege",
+		ID:     "edge",
 		Source: "foo",
 		Target: "bar",
 	})
@@ -280,7 +279,7 @@ func TestWrite_FileOutput(t *testing.T) {
 			assert.NoError(t, err)
 
 			// create mock d2 graph from script
-			d.d2Graph = compileMockD2Graph(tc.expected, d)
+			_, d.d2Graph, _ = d2lib.Compile(d.ctx, tc.expected, d.d2CompileOpts, d.d2RenderOpts)
 
 			// Verify output files are created for d2 script and diagram
 			err = d.Write(false)
@@ -355,10 +354,4 @@ func TestGetIconURL(t *testing.T) {
 			}
 		})
 	}
-}
-
-// compileMockD2Graph compiles a mock D2 graph from a string
-func compileMockD2Graph(script string, d *Diagram) *d2graph.Graph {
-	_, g, _ := d2lib.Compile(context.Background(), script, d.d2CompileOpts, d.d2RenderOpts)
-	return g
 }

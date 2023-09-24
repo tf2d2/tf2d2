@@ -168,7 +168,7 @@ func (d *Diagram) Generate(dryRun bool) error {
 	// compile d2 diagram from rendered template output
 	_, d.d2Graph, err = d2lib.Compile(d.ctx, out, d.d2CompileOpts, d.d2RenderOpts)
 	if err != nil {
-		return fmt.Errorf("error compiling d2 graph: %s", err)
+		return fmt.Errorf("error compiling d2 graph: %s", err.Error())
 	}
 
 	return d.Write(dryRun)
