@@ -1,5 +1,5 @@
-[![ci](https://github.com/tf2d2/tf2d2/actions/workflows/ci.yml/badge.svg)](https://github.com/tf2d2/tf2d2/actions/workflows/ci.yml)
-[![codeql](https://github.com/tf2d2/tf2d2/actions/workflows/codeql.yml/badge.svg)](https://github.com/tf2d2/tf2d2/actions/workflows/codeql.yml)
+[![CI](https://github.com/tf2d2/tf2d2/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tf2d2/tf2d2/actions/workflows/ci.yml)
+[![codeql](https://github.com/tf2d2/tf2d2/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/tf2d2/tf2d2/actions/workflows/codeql.yml)
 [![codecov](https://codecov.io/gh/tf2d2/tf2d2/graph/badge.svg?token=ZUBADJX1MU)](https://codecov.io/gh/tf2d2/tf2d2)
 [![Go Reference](https://pkg.go.dev/badge/github.com/tf2d2/tf2d2.svg)](https://pkg.go.dev/github.com/tf2d2/tf2d2)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tf2d2/tf2d2)](https://goreportcard.com/report/github.com/tf2d2/tf2d2)
