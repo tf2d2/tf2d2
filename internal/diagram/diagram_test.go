@@ -45,49 +45,6 @@ func testGetMockDiagram(t *testing.T, mockGraph *graph.Graph, outputFile string)
 	return mockDiagram
 }
 
-func TestWrite_DryRun(t *testing.T) {
-	testCases := []struct {
-		name     string
-		expected string
-		isError  bool
-	}{
-		{
-			name:     "empty d2 graph",
-			expected: "",
-			isError:  false,
-		},
-		{
-			name:     "non-empty d2 graph",
-			expected: "a -> b\n",
-			isError:  false,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			d := testGetMockDiagram(t, nil, "")
-
-			// create mock d2 graph from script
-			_, d.d2Graph, _ = d2lib.Compile(d.ctx, tc.expected, d.d2CompileOpts, d.d2RenderOpts)
-
-			// Store the original os.Stdout and redirect it to a pipe
-			originalStdout := os.Stdout
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-
-			// Verify the script is written to stdout
-			err := d.Write(true)
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expected, d2format.Format(d.d2Graph.AST))
-
-			// Restore the original stdout and read the captured output from the pipe
-			w.Close()
-			os.Stdout = originalStdout
-			capturedOutput, _ := io.ReadAll(r)
-			assert.Contains(t, string(capturedOutput), tc.expected)
-		})
-	}
-}
-
 func TestGenerate_Success(t *testing.T) {
 	expectedScript, err := utils.GetTestData("script.golden")
 	assert.NoError(t, err)
@@ -265,10 +222,12 @@ func TestWrite_FileOutput(t *testing.T) {
 			d := testGetMockDiagram(t, nil, tc.filename)
 
 			// create mock d2 graph from script
-			_, d.d2Graph, _ = d2lib.Compile(d.ctx, tc.expected, d.d2CompileOpts, d.d2RenderOpts)
+			var err error
+			d.d2Diagram, d.d2Graph, err = d2lib.Compile(d.ctx, tc.expected, d.d2CompileOpts, d.d2RenderOpts)
+			assert.NoError(t, err)
 
 			// Verify output files are created for d2 script and diagram
-			err := d.Write(false)
+			err = d.Write(false)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, d2format.Format(d.d2Graph.AST))
 
@@ -283,6 +242,49 @@ func TestWrite_FileOutput(t *testing.T) {
 			// remove output files
 			_ = os.Remove(outputScript)
 			_ = os.Remove(tc.filename)
+		})
+	}
+}
+
+func TestWrite_DryRun(t *testing.T) {
+	testCases := []struct {
+		name     string
+		expected string
+		isError  bool
+	}{
+		{
+			name:     "empty d2 graph",
+			expected: "",
+			isError:  false,
+		},
+		{
+			name:     "non-empty d2 graph",
+			expected: "a -> b\n",
+			isError:  false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			d := testGetMockDiagram(t, nil, "")
+
+			// create mock d2 graph from script
+			_, d.d2Graph, _ = d2lib.Compile(d.ctx, tc.expected, d.d2CompileOpts, d.d2RenderOpts)
+
+			// Store the original os.Stdout and redirect it to a pipe
+			originalStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			// Verify the script is written to stdout
+			err := d.Write(true)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expected, d2format.Format(d.d2Graph.AST))
+
+			// Restore the original stdout and read the captured output from the pipe
+			w.Close()
+			os.Stdout = originalStdout
+			capturedOutput, _ := io.ReadAll(r)
+			assert.Contains(t, string(capturedOutput), tc.expected)
 		})
 	}
 }
