@@ -40,7 +40,7 @@ func (c *GetStateVersion) Run() ([]byte, error) {
 
 	stateVersionRes, err := c.TFCloud.StateVersionService.GetState(c.Context, c.Organization, c.Workspace)
 	if err != nil {
-		return nil, fmt.Errorf("error getting terraform state version: %s", err.Error())
+		return nil, err
 	}
 
 	stateDownloadReq, err := http.NewRequestWithContext(c.Context, http.MethodGet, stateVersionRes.DownloadURL, nil)

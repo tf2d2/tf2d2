@@ -21,6 +21,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/tf2d2/tf2d2/internal/diagram"
 	"github.com/tf2d2/tf2d2/internal/inframap"
@@ -81,6 +82,8 @@ func (r *Runtime) PreRunE(cmd *cobra.Command, _ []string) error {
 		logger.SetLevel(hclog.LevelFromString("debug"))
 	}
 
+	logger.Debug("successfully executed pre-run cli configuration")
+
 	return nil
 }
 
@@ -90,7 +93,7 @@ func (r *Runtime) RunE(_ *cobra.Command, _ []string) error {
 
 	// read local or remote Terraform state
 	var tfJsonState []byte
-	if r.Config.StateFile != "" {
+	if r.Config.Token == "" {
 		bytes, err := os.ReadFile(filepath.Clean(r.Config.StateFile))
 		if err != nil {
 			return err
@@ -113,6 +116,7 @@ func (r *Runtime) RunE(_ *cobra.Command, _ []string) error {
 		}
 		tfJsonState, err = stateCommand.Run()
 		if err != nil {
+			logger.Error(err.Error())
 			return err
 		}
 		logger.Info("loaded remote terraform state", "organization", r.Config.Organization, "workspace", r.Config.Workspace)
@@ -140,6 +144,11 @@ func (r *Runtime) readConfig() error {
 	viper.AddConfigPath("$HOME/") // home directory
 	viper.AddConfigPath(".")      // current directory
 
+	// read in environment variables that match
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.SetEnvPrefix("TF")
+	viper.AutomaticEnv()
+
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
 
@@ -156,6 +165,7 @@ func (r *Runtime) readConfig() error {
 	default:
 		logger.Info("using config file", "path", viper.ConfigFileUsed())
 	}
+
 	return nil
 }
 
