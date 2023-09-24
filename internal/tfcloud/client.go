@@ -18,7 +18,6 @@ package tfcloud
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/hashicorp/go-tfe"
 )
@@ -37,17 +36,9 @@ func NewTFClient(host, token string) (*tfe.Client, error) {
 		hostname = defaultHostname
 	}
 
-	apiToken := token
-	if apiToken == "" {
-		apiTokenEnv := os.Getenv("TF_API_TOKEN")
-		if apiTokenEnv != "" {
-			apiToken = apiTokenEnv
-		}
-	}
-
 	tfeConfig.Headers.Set("User-Agent", baseUserAgent)
 	tfeConfig.Address = fmt.Sprintf("https://%s", hostname)
-	tfeConfig.Token = apiToken
+	tfeConfig.Token = token
 
 	if tfeConfig.Token == "" {
 		return nil, fmt.Errorf("terraform api token is not set")
