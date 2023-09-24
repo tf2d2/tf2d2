@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # required to publish releases
+      packages: write # required to publish images to GitHub
+    # Skip running release workflow on forks
+    if: github.repository_owner == 'tf2d2'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Login to Docker
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Semantic Release
+        uses: cycjimmy/semantic-release-action@61680d0e9b02ff86f5648ade99e01be17f0260a4 # v4.0.0
+        with:
+          semantic_version: 18.0.0
+          extra_plugins: |
+            @semantic-release/changelog@6.0.0
+            @semantic-release/git@10.0.0
+            @semantic-release/exec@6.0.3
+            conventional-changelog-conventionalcommits@4.6.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.TF2D2_TOKEN }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8 # v5.0.0
+        with:
+          version: latest
+          args: release --release-notes /tmp/release-notes.md --clean --skip-sign
+        env:
+          GITHUB_TOKEN: ${{ secrets.TF2D2_TOKEN }}
