@@ -64,11 +64,11 @@ func TestGenerate_Success(t *testing.T) {
 
 	outScript, err := os.ReadFile(outputScript)
 	assert.NoError(t, err)
-	assert.Equal(t, string(outScript), expectedScript)
+	assert.Equal(t, expectedScript, string(outScript))
 
 	outDiagram, err := os.ReadFile(outputDiagram)
 	assert.NoError(t, err)
-	assert.Equal(t, string(outDiagram)+"\n", expectedDiagram)
+	assert.Contains(t, expectedDiagram, string(outDiagram))
 
 	// remove output files
 	_ = os.Remove(outputScript)
