@@ -137,6 +137,11 @@ issues:
         - scopelint
         - unparam
         - goconst
+    # G306: Expect WriteFile permissions to be 0600 or less
+    # ignore error in /internal/diagram/diagram.go
+    - text: "G306:"
+      linters:
+        - gosec
 
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To list all
