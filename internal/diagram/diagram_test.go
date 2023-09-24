@@ -6,10 +6,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/tf2d2/tf2d2/internal/utils"
+
 	"github.com/cycloidio/inframap/graph"
 	"github.com/cycloidio/tfdocs/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/tf2d2/tf2d2/internal/utils"
 	"oss.terrastruct.com/d2/d2format"
 	"oss.terrastruct.com/d2/d2lib"
 )
