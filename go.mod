@@ -8,7 +8,7 @@ require (
 	github.com/sethvargo/go-retry v0.2.4
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
-	github.com/tf2d2/icons v0.0.0-20230917145700-3ed7245a771b
+	github.com/tf2d2/icons v0.0.0-20230922001054-dd9c3c748b17
 	oss.terrastruct.com/d2 v0.6.0
 	oss.terrastruct.com/util-go v0.0.0-20230604222829-11c3c60fec14
 )
