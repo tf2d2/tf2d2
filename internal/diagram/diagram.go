@@ -40,18 +40,9 @@ import (
 	"oss.terrastruct.com/d2/d2renderers/d2svg"
 	"oss.terrastruct.com/d2/d2target"
 	"oss.terrastruct.com/d2/d2themes/d2themescatalog"
-	"oss.terrastruct.com/d2/lib/png"
 	"oss.terrastruct.com/d2/lib/textmeasure"
 	"oss.terrastruct.com/util-go/go2"
-	"oss.terrastruct.com/util-go/xmain"
 )
-
-// IDiagram defines how to generate a d2 diagram
-type IDiagram interface {
-	Initialize() error
-	Generate() error
-	Render() error
-}
 
 // Diagram implements IDiagram to generate a d2 diagram
 type Diagram struct {
@@ -117,12 +108,12 @@ func (d *Diagram) Initialize() error {
 	d.d2CompileOpts = compileOpts
 	d.d2RenderOpts = renderOpts
 
-	logger.Debug("initialized d2 diagram")
+	logger.Debug("initialized diagram")
 
 	return nil
 }
 
-// Generate generates a D2 diagram
+// Generate generates a D2 script and diagram from Terraform state data
 func (d *Diagram) Generate(dryRun bool) error { //nolint:gocyclo
 	logger := hclog.FromContext(d.ctx)
 
@@ -188,9 +179,9 @@ func (d *Diagram) Generate(dryRun bool) error { //nolint:gocyclo
 	return d.Write(dryRun)
 }
 
-// Write creates an output file for both the rendered d2 diagram
-// and compiled d2 script. If it's a dry run, no output files are
-// created but the d2 script is written to stdout
+// Write creates an output file for both the rendered D2 diagram
+// and compiled D2 script. If it's a dry run, no output files are
+// created but the D2 script is written to stdout
 func (d *Diagram) Write(dryRun bool) error {
 	// turn the graph into a script
 	script := d2format.Format(d.d2Graph.AST)
@@ -220,40 +211,16 @@ func (d *Diagram) Write(dryRun bool) error {
 
 func writeContent(path string, scriptData string, svgData []byte) error {
 	fileExtension := filepath.Ext(path)
-	switch fileExtension {
-	case ".png":
-		// write PNG diagram to output file path
-		// chromium is used to convert SVG to PNG, it's installed if not available
-		var pw png.Playwright
-		pw, err := png.InitPlaywright()
-		if err != nil {
-			return err
-		}
-		defer pw.Cleanup() //nolint:errcheck
 
-		var pngData []byte
-		pngData, err = png.ConvertSVG(&xmain.State{}, pw.Page, svgData)
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(path, pngData, 0640)
-		if err != nil {
-			return err
-		}
-	default:
-		// write SVG diagram to output file path
-		err := os.WriteFile(path, svgData, 0640)
-		if err != nil {
-			return err
-		}
+	// write D2 diagram to output file path
+	err := os.WriteFile(path, svgData, 0640)
+	if err != nil {
+		return err
 	}
 
-	// write d2 script to output file path
+	// write D2 script to output file path
 	scriptFilepath := strings.ReplaceAll(path, fileExtension, ".d2")
-	err := os.WriteFile(scriptFilepath, []byte(scriptData), 0640)
-
-	return err
+	return os.WriteFile(scriptFilepath, []byte(scriptData), 0640)
 }
 
 func getIconURL(resource string) *url.URL {

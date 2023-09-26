@@ -87,7 +87,7 @@ func (r *Runtime) PreRunE(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// RunE executes the logic to generate a d2 diagram from Terraform state
+// RunE executes the logic to generate a D2 diagram from Terraform state
 func (r *Runtime) RunE(_ *cobra.Command, _ []string) error {
 	logger := hclog.FromContext(r.ctx)
 
@@ -169,7 +169,7 @@ func (r *Runtime) readConfig() error {
 	return nil
 }
 
-// bindFlags binds all Cobra flags to Viper config
+// bindFlags binds all cobra flags to viper config
 func (r *Runtime) bindFlags() error {
 	fs := r.cmd.Flags()
 	if err := viper.BindPFlags(fs); err != nil {

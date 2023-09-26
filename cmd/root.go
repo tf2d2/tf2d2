@@ -39,8 +39,8 @@ func NewCommand(ctx context.Context) *cobra.Command {
 	r := cli.NewRuntime(cmdCtx)
 	cmd := &cobra.Command{
 		Use:           "tf2d2",
-		Short:         "Generate d2 diagrams from Terraform",
-		Long:          "Generate d2 diagrams from Terraform",
+		Short:         "Generate D2 diagram from Terraform",
+		Long:          "Generate D2 diagram from Terraform",
 		Annotations:   map[string]string{"command": "root"},
 		Version:       version.GetVersion(),
 		SilenceErrors: true,
@@ -56,7 +56,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&r.Config.Workspace, "workspace", "w", "", "name of terraform workspace")
 	cmd.PersistentFlags().StringVarP(&r.Config.Token, "token", "t", "", "terraform api token")
 	cmd.PersistentFlags().StringVarP(&r.Config.StateFile, "state-file", "f", "terraform.tfstate", "file path of terraform state")
-	cmd.PersistentFlags().StringVarP(&r.Config.OutputFile, "output-file", "o", "out.svg", "file path of output diagram in .svg or .png format")
+	cmd.PersistentFlags().StringVarP(&r.Config.OutputFile, "output-file", "o", "out.svg", "file path of output diagram in .svg")
 	cmd.PersistentFlags().BoolVarP(&r.Config.Verbose, "verbose", "v", false, "show debug output")
 	cmd.PersistentFlags().BoolVarP(&r.Config.DryRun, "dry-run", "", false, "only print output")
 

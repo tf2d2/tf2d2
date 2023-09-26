@@ -244,7 +244,7 @@ func TestGenerate_Errors(t *testing.T) {
 }
 
 func TestWrite_FileOutput(t *testing.T) {
-	outExpected, outputScript, outputSVG, outputPNG := "a -> b\n", "output.d2", "output.svg", "output.png"
+	outExpected, outputScript, outputSVG := "a -> b\n", "output.d2", "output.svg"
 	testCases := []struct {
 		name     string
 		filename string
@@ -261,12 +261,6 @@ func TestWrite_FileOutput(t *testing.T) {
 			name:     "svg d2 diagram",
 			expected: outExpected,
 			filename: outputSVG,
-			isError:  false,
-		},
-		{
-			name:     "png d2 diagram",
-			expected: outExpected,
-			filename: outputPNG,
 			isError:  false,
 		},
 	}
