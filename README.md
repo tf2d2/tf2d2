@@ -8,6 +8,14 @@
 
 Generate [d2](https://terrastruct.com/) diagrams from [Terraform](https://www.terraform.io/).
 
+## Cloud Providers
+
+Supported Terraform cloud provider(s) are:
+
+- [AWS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+
+Note that only specific provider resources are included in the generated `d2` diagram in order to better represent the infrastructure deployed via the supported Terraform cloud provider(s).
+
 ## Installation
 
 ### MacOS
@@ -43,7 +51,7 @@ go build -o tf2d2 .
 
 ## Usage
 
-`tf2d2` can generate a `d2` diagram from various sources.
+`tf2d2` can generate a `d2` diagram from the following sources.
 
 ### Local Terraform State
 
