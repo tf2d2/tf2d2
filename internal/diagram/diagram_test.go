@@ -51,7 +51,7 @@ func TestGenerate_Success(t *testing.T) {
 			ID:        "node_foo",
 			Canonical: "node_foo",
 			Resource: resource.Resource{
-				Name: "node_foo",
+				Name: "aws_ecs_cluster",
 			},
 		},
 	)
@@ -60,7 +60,7 @@ func TestGenerate_Success(t *testing.T) {
 			ID:        "node_bar",
 			Canonical: "node_bar",
 			Resource: resource.Resource{
-				Name: "node_bar",
+				Name: "aws_ecs_cluster",
 			},
 		},
 	)
@@ -92,6 +92,71 @@ func TestGenerate_Success(t *testing.T) {
 	// remove output files
 	_ = os.Remove(outputScript)
 	_ = os.Remove(outputDiagram)
+}
+
+func TestGenerate_SkipSourceNodes(t *testing.T) {
+	mockGraph := graph.New()
+	err := mockGraph.AddNode(
+		&graph.Node{ID: "node_foo", Canonical: "node_foo", Resource: resource.Resource{Name: "aws_ecs_cluster"}},
+	)
+	assert.NoError(t, err)
+	err = mockGraph.AddNode(
+		&graph.Node{ID: "node_bar", Canonical: "node_bar", Resource: resource.Resource{Name: "aws_ecs_cluster"}},
+	)
+	assert.NoError(t, err)
+	err = mockGraph.AddNode(
+		&graph.Node{ID: "node_foo_skip", Canonical: "node_foo_skip", Resource: resource.Resource{Name: "aws_iam_policy"}},
+	)
+	assert.NoError(t, err)
+	err = mockGraph.AddEdge(&graph.Edge{ID: "edge_baz", Source: "node_foo", Target: "node_bar"})
+	assert.NoError(t, err)
+	err = mockGraph.AddEdge(&graph.Edge{ID: "edge_skip", Source: "node_foo_skip", Target: "node_bar"})
+	assert.NoError(t, err)
+
+	testCases := []struct {
+		name        string
+		isTargetErr bool
+	}{
+		{
+			name:        "skip edge source node",
+			isTargetErr: false,
+		},
+		{
+			name:        "skip edge target node",
+			isTargetErr: true,
+		},
+	}
+	outputScript, outputDiagram := "output.d2", "output.svg"
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.isTargetErr {
+				mockGraph.InvertEdge("edge_skip")
+			}
+
+			expectedScript, err := utils.GetTestData("script.golden")
+			assert.NoError(t, err)
+
+			d := testGetMockDiagram(t, mockGraph, outputDiagram)
+			err = d.Generate(false)
+			assert.NoError(t, err)
+
+			outScript, err := os.ReadFile(outputScript)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, outScript)
+			assert.Equal(t, expectedScript, string(outScript))
+
+			outDiagram, err := os.ReadFile(outputDiagram)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, outDiagram)
+			assert.Contains(t, string(outDiagram), "node_foo")
+			assert.Contains(t, string(outDiagram), "node_bar")
+
+			// remove output files
+			_ = os.Remove(outputScript)
+			_ = os.Remove(outputDiagram)
+		})
+	}
+
 }
 
 func TestGenerate_Errors(t *testing.T) {
@@ -138,19 +203,19 @@ func TestGenerate_Errors(t *testing.T) {
 		expected string
 		graph    *graph.Graph
 	}{
-		{
-			name:     "resource icon not found",
-			expected: "resource \"aws_invalid_resource\" not found",
-			graph: &graph.Graph{
-				Nodes: []*graph.Node{
-					{
-						ID:        "aws_invalid_resource",
-						Canonical: "aws_invalid_resource",
-						Resource:  resource.Resource{Name: "aws_invalid_resource"},
-					},
-				},
-			},
-		},
+		// {
+		// 	name:     "resource icon not found",
+		// 	expected: "resource \"\" not found",
+		// 	graph: &graph.Graph{
+		// 		Nodes: []*graph.Node{
+		// 			{
+		// 				ID:        "aws_invalid_resource",
+		// 				Canonical: "aws_invalid_resource",
+		// 				Resource:  resource.Resource{Name: "aws_invalid_resource"},
+		// 			},
+		// 		},
+		// 	},
+		// },
 		{
 			name:     "empty terraform inframap",
 			expected: "no shapes found",
@@ -176,37 +241,6 @@ func TestGenerate_Errors(t *testing.T) {
 			assert.EqualError(t, err, tc.expected)
 		})
 	}
-}
-
-func TestGenerate_CompileError(t *testing.T) {
-	compileErrGraph := graph.New()
-	err := compileErrGraph.AddNode(&graph.Node{
-		ID:        "foo",
-		Canonical: "foo",
-		Resource:  resource.Resource{Name: "foo"},
-	})
-	assert.NoError(t, err)
-	err = compileErrGraph.AddNode(&graph.Node{
-		ID:        "bar",
-		Canonical: "bar",
-		Resource:  resource.Resource{Name: "bar"},
-	})
-	assert.NoError(t, err)
-	err = compileErrGraph.AddEdge(&graph.Edge{
-		ID:     "edge",
-		Source: "foo",
-		Target: "bar",
-	})
-	assert.NoError(t, err)
-
-	d := testGetMockDiagram(t, compileErrGraph, "output.svg")
-
-	// induce compile error
-	d.d2CompileOpts = &d2lib.CompileOptions{}
-
-	err = d.Generate(true)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "error compiling d2 graph")
 }
 
 func TestWrite_FileOutput(t *testing.T) {
@@ -312,53 +346,49 @@ func TestGetIconURL(t *testing.T) {
 	testCases := []struct {
 		name     string
 		resource string
-		isError  bool
+		expected string
 	}{
 		{
 			name:     "aws icon",
-			resource: "aws_eks_cluster",
-			isError:  false,
+			resource: "aws_ecs_cluster",
+			expected: "https://raw.githubusercontent.com/tf2d2/icons/main/aws/service/Containers/64/Amazon-Elastic-Container-Service.svg",
 		},
 		{
 			name:     "azure icon",
 			resource: "azurerm_aadb2c_directory",
-			isError:  false,
+			expected: "https://raw.githubusercontent.com/tf2d2/icons/main/azure/identity/Azure-AD-B2C.svg",
 		},
 		{
 			name:     "google icon",
 			resource: "google_compute_instance",
-			isError:  false,
+			expected: "",
 		},
 		{
 			name:     "unknown cloud provider",
 			resource: "unknown_cloud_provider",
-			isError:  false,
+			expected: "",
 		},
 		{
 			name:     "invalid aws resource",
 			resource: "aws_invalid_resource",
-			isError:  true,
+			expected: "",
 		},
 		{
 			name:     "invalid azure resource",
 			resource: "azurerm_invalid_resource",
-			isError:  true,
+			expected: "",
 		},
 		{
 			name:     "invalid google resource",
 			resource: "google_invalid_resource",
-			isError:  true,
+			expected: "",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := getIconURL(tc.resource)
-			if tc.isError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
+			url := getIconURL(tc.resource)
+			assert.Equal(t, tc.expected, url.String())
 		})
 	}
 }

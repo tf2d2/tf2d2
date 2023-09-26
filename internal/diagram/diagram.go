@@ -27,6 +27,7 @@ import (
 	iconsAWS "github.com/tf2d2/icons/providers/aws"
 	iconsAzure "github.com/tf2d2/icons/providers/azurerm"
 	iconsGoogle "github.com/tf2d2/icons/providers/google"
+	"github.com/tf2d2/tf2d2/internal/provider"
 	d2tpl "github.com/tf2d2/tf2d2/internal/template"
 
 	"github.com/cycloidio/inframap/graph"
@@ -122,7 +123,7 @@ func (d *Diagram) Initialize() error {
 }
 
 // Generate generates a D2 diagram
-func (d *Diagram) Generate(dryRun bool) error {
+func (d *Diagram) Generate(dryRun bool) error { //nolint:gocyclo
 	logger := hclog.FromContext(d.ctx)
 
 	// compute d2 shapes
@@ -130,15 +131,15 @@ func (d *Diagram) Generate(dryRun bool) error {
 	for _, n := range d.TFInfraMap.Nodes {
 		logger.Debug(fmt.Sprintf("%#v\n", n))
 
+		if !provider.ValidateResource(n.Resource.Name) {
+			logger.Debug(fmt.Sprintf("skip node: %s", n.Resource.Name))
+			continue
+		}
+
 		s := d2target.BaseShape()
 		s.ID = strings.ReplaceAll(n.Canonical, ".", "_")
 		s.Label = n.Resource.Name
-
-		iconURL, err := getIconURL(n.Resource.Name)
-		if err != nil {
-			return err
-		}
-		s.Icon = iconURL
+		s.Icon = getIconURL(n.Resource.Name)
 		shapes = append(shapes, s)
 	}
 
@@ -152,6 +153,16 @@ func (d *Diagram) Generate(dryRun bool) error {
 		targetN, err := d.TFInfraMap.GetNodeByID(e.Target)
 		if err != nil {
 			return fmt.Errorf("error getting target node: %s", e.Target)
+		}
+
+		if !provider.ValidateResource(sourceN.Resource.Name) {
+			logger.Debug(fmt.Sprintf("skip edge source: %s", sourceN.Resource.Name))
+			continue
+		}
+
+		if !provider.ValidateResource(targetN.Resource.Name) {
+			logger.Debug(fmt.Sprintf("skip edge target: %s", targetN.Resource.Name))
+			continue
 		}
 
 		c := d2target.BaseConnection()
@@ -245,31 +256,23 @@ func writeContent(path string, scriptData string, svgData []byte) error {
 	return err
 }
 
-func getIconURL(resource string) (*url.URL, error) {
-	var iconURL *url.URL
-	prefix, _, _ := strings.Cut(resource, "_")
+func getIconURL(resource string) *url.URL {
+	prefix, link := strings.Split(resource, "_")[0], ""
 	switch prefix {
 	case "aws":
-		r, err := iconsAWS.GetResource(resource)
-		if err != nil {
-			return nil, err
+		if r, err := iconsAWS.GetResource(resource); err == nil {
+			link = r.IconURL
 		}
-		iconURL, _ = url.Parse(r.IconURL)
 	case "azurerm":
-		r, err := iconsAzure.GetResource(resource)
-		if err != nil {
-			return nil, err
+		if r, err := iconsAzure.GetResource(resource); err == nil {
+			link = r.IconURL
 		}
-		iconURL, _ = url.Parse(r.IconURL)
 	case "google":
-		r, err := iconsGoogle.GetResource(resource)
-		if err != nil {
-			return nil, err
+		if r, err := iconsGoogle.GetResource(resource); err == nil {
+			link = r.IconURL
 		}
-		iconURL, _ = url.Parse(r.IconURL)
-	default:
-		return &url.URL{}, nil
 	}
+	iconURL, _ := url.Parse(link)
 
-	return iconURL, nil
+	return iconURL
 }
