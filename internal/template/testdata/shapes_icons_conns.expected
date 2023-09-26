@@ -1,0 +1,24 @@
+
+s1_id: {
+  label: s1_label
+  shape: image
+  icon: https://foo.bar
+  style: {
+    opacity: 0
+    stroke-dash: 0
+    stroke-width: 0
+    bold: false
+  }
+}
+s2_id: {
+  label: s2_label
+  shape: image
+  icon: https://foo.bar
+  style: {
+    opacity: 0
+    stroke-dash: 0
+    stroke-width: 0
+    bold: false
+  }
+}
+s1_id -> s2_id

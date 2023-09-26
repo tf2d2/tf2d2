@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
 
       - name: Validate syntax with actionlint
         run: |
@@ -27,6 +27,6 @@ jobs:
         with:
           framework: github_actions
           directory: ./github/workflows/
-          quite: true
+          quiet: true
           compact: true
           output_format: github_failed_only

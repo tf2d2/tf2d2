@@ -1,0 +1,23 @@
+node_foo: {
+  label: aws_ecs_cluster
+  shape: image
+  icon: https://raw.githubusercontent.com/tf2d2/icons/main/aws/service/Containers/64/Amazon-Elastic-Container-Service.svg
+  style: {
+    opacity: 1
+    stroke-dash: 0
+    stroke-width: 2
+    bold: true
+  }
+}
+node_bar: {
+  label: aws_ecs_cluster
+  shape: image
+  icon: https://raw.githubusercontent.com/tf2d2/icons/main/aws/service/Containers/64/Amazon-Elastic-Container-Service.svg
+  style: {
+    opacity: 1
+    stroke-dash: 0
+    stroke-width: 2
+    bold: true
+  }
+}
+node_foo -> node_bar

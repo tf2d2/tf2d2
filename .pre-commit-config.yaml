@@ -4,7 +4,9 @@ repos:
     hooks:
       - id: check-merge-conflict
       - id: end-of-file-fixer
+        exclude: art\.txt$
       - id: trailing-whitespace
+        exclude: art\.txt$
       - id: check-added-large-files
 
   - repo: https://github.com/compilerla/conventional-pre-commit

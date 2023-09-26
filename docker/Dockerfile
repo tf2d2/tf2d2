@@ -12,28 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GOOS 	?= $(shell go env GOOS)
-GOARCH	?= $(shell go env GOARCH)
+FROM alpine:3.18.3
 
-default: build
+COPY tf2d2 /usr/local/bin/tf2d2
 
-build:
-	go build -o ./bin/$(GOOS)-$(GOARCH)/tf2d2
-
-local-release:
-	goreleaser release --clean --skip-publish --skip-docker --skip-validate --snapshot
-
-lint:
-	golangci-lint run ./...
-
-test:
-	go test -v -covermode=atomic -coverprofile=coverage.out ./...
-
-test-html:
-	go tool cover -html=coverage.out
-
-pre-commit:
-	pre-commit run --all-files
-
-local-run:
-	./bin/$(GOOS)-$(GOARCH)/tf2d2 $(ARGS)
+ENTRYPOINT [ "tf2d2" ]

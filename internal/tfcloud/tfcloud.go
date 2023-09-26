@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-	http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,20 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package tfcloud
 
-import (
-	"context"
-	"os"
+import "github.com/hashicorp/go-tfe"
 
-	"github.com/tf2d2/tf2d2/cmd"
-)
+// TFCloud represents services that interact with the Terraform API
+type TFCloud struct {
+	StateVersionService
+}
 
-var appCtx context.Context
-
-func main() {
-	appCtx = context.Background()
-	if err := cmd.Execute(appCtx); err != nil {
-		os.Exit(1)
+// NewTFCloud creates an instance with services that interact with the Terraform API
+func NewTFCloud(c *tfe.Client) *TFCloud {
+	return &TFCloud{
+		StateVersionService: NewStateVersionService(c),
 	}
 }

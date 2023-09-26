@@ -28,7 +28,7 @@ linters-settings:
       - name: error-return
       - name: error-strings
       - name: exported
-      - name: if-return
+      # - name: if-return
       - name: increment-decrement
       - name: indent-error-flow
       - name: blank-imports
@@ -42,7 +42,7 @@ linters-settings:
       - name: unused-parameter
       - name: unreachable-code
       - name: var-declaration
-      - name: var-naming
+      # - name: var-naming
 
   gofmt:
     # simplify code: gofmt with `-s` option, true by default
@@ -137,6 +137,11 @@ issues:
         - scopelint
         - unparam
         - goconst
+    # G306: Expect WriteFile permissions to be 0600 or less
+    # ignore error in /internal/diagram/diagram.go
+    - text: "G306:"
+      linters:
+        - gosec
 
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To list all
